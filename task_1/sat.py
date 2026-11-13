@@ -3,10 +3,11 @@
 Every physical square is represented by one propositional variable.
 At-most-one groups are encoded with the selected cardinality encoding.
 """
+
 from __future__ import annotations
 from dataclasses import dataclass
 from time import perf_counter
-from core import verify_solution
+from .core import verify_solution
 
 
 def square_var(n: int, row: int, col: int) -> int:
@@ -37,13 +38,13 @@ class SATResult:
 
 
 class CNFEncoder:
-    ENCODINGS = {'pairwise', 'seqcounter', 'ladder'}
+    ENCODINGS = {"pairwise", "seqcounter", "ladder"}
 
-    def __init__(self, n: int, encoding: str = 'pairwise', symmetry: bool = False):
+    def __init__(self, n: int, encoding: str = "pairwise", symmetry: bool = False):
         if n < 1:
-            raise ValueError('N must be positive')
+            raise ValueError("N must be positive")
         if encoding not in self.ENCODINGS:
-            raise ValueError(f'Unknown encoding: {encoding}')
+            raise ValueError(f"Unknown encoding: {encoding}")
         self.n, self.encoding, self.symmetry = n, encoding, symmetry
 
     def encode(self) -> CNFInfo:
@@ -51,20 +52,24 @@ class CNFEncoder:
             from pysat.card import CardEnc, EncType
             from pysat.formula import IDPool
         except ImportError as exc:
-            raise RuntimeError('Install python-sat: python -m pip install -r requirements.txt') from exc
+            raise RuntimeError(
+                "Install python-sat: python -m pip install -r requirements.txt"
+            ) from exc
         start = perf_counter()
         n = self.n
-        pool = IDPool(start_from=n*n+1)
+        pool = IDPool(start_from=n * n + 1)
         clauses: list[list[int]] = []
         encoding_id = {
-            'pairwise': EncType.pairwise,
-            'seqcounter': EncType.seqcounter,
-            'ladder': EncType.ladder,
+            "pairwise": EncType.pairwise,
+            "seqcounter": EncType.seqcounter,
+            "ladder": EncType.ladder,
         }[self.encoding]
 
         def at_most_one(group: list[int]):
             if len(group) >= 2:
-                encoding = CardEnc.atmost(lits=group, bound=1, vpool=pool, encoding=encoding_id)
+                encoding = CardEnc.atmost(
+                    lits=group, bound=1, vpool=pool, encoding=encoding_id
+                )
                 clauses.extend(encoding.clauses)
 
         # Exactly one queen in every row.
@@ -78,47 +83,67 @@ class CNFEncoder:
             at_most_one([square_var(n, r, c) for r in range(n)])
 
         # Both diagonal directions. No group of length one needs an AMO clause.
-        for delta in range(-(n-1), n):
-            at_most_one([square_var(n, r, c)
-                         for r in range(n) for c in range(n) if r-c == delta])
-        for total in range(2*n-1):
-            at_most_one([square_var(n, r, c)
-                         for r in range(n) for c in range(n) if r+c == total])
+        for delta in range(-(n - 1), n):
+            at_most_one(
+                [
+                    square_var(n, r, c)
+                    for r in range(n)
+                    for c in range(n)
+                    if r - c == delta
+                ]
+            )
+        for total in range(2 * n - 1):
+            at_most_one(
+                [
+                    square_var(n, r, c)
+                    for r in range(n)
+                    for c in range(n)
+                    if r + c == total
+                ]
+            )
 
         if self.symmetry and n >= 2:
             # Reflect columns: at least one solution has the first-row queen
             # in the left half (center included if odd). Not for model counting.
-            clauses.append([square_var(n, 0, c) for c in range((n+1)//2)])
+            clauses.append([square_var(n, 0, c) for c in range((n + 1) // 2)])
 
-        return CNFInfo(n, self.encoding, clauses, max(n*n, pool.top),
-                       (perf_counter()-start)*1000, self.symmetry)
+        return CNFInfo(
+            n,
+            self.encoding,
+            clauses,
+            max(n * n, pool.top),
+            (perf_counter() - start) * 1000,
+            self.symmetry,
+        )
 
 
 class SATSolver:
-    def __init__(self, n: int, encoding: str = 'pairwise', symmetry: bool = False):
+    def __init__(self, n: int, encoding: str = "pairwise", symmetry: bool = False):
         self.encoder = CNFEncoder(n, encoding, symmetry)
 
     def solve(self) -> SATResult:
         try:
             from pysat.solvers import Glucose3
         except ImportError as exc:
-            raise RuntimeError('Install python-sat: python -m pip install -r requirements.txt') from exc
+            raise RuntimeError(
+                "Install python-sat: python -m pip install -r requirements.txt"
+            ) from exc
         cnf = self.encoder.encode()
         t0 = perf_counter()
         with Glucose3(bootstrap_with=cnf.clauses) as solver:
-            setup_ms = (perf_counter()-t0)*1000
+            setup_ms = (perf_counter() - t0) * 1000
             t1 = perf_counter()
             satisfiable = solver.solve()
-            solve_ms = (perf_counter()-t1)*1000
+            solve_ms = (perf_counter() - t1) * 1000
             model = solver.get_model() if satisfiable else None
         queens = None
         if model is not None:
-            selected = set(x for x in model if x > 0 and x <= cnf.n*cnf.n)
+            selected = set(x for x in model if x > 0 and x <= cnf.n * cnf.n)
             queens = [-1] * cnf.n
             for r in range(cnf.n):
                 for c in range(cnf.n):
                     if square_var(cnf.n, r, c) in selected:
                         queens[c] = r
             if not verify_solution(queens, cnf.n):
-                raise AssertionError('Solver returned a model with invalid queens')
+                raise AssertionError("Solver returned a model with invalid queens")
         return SATResult(queens, bool(satisfiable), cnf, setup_ms, solve_ms)

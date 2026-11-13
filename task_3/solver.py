@@ -101,15 +101,21 @@ class KakuroSolver:
         values = self.order_values(cell)
         remaining = set(self.domains) - self.assignment.keys()
         degree = len(self.csp.neighbors[cell] & remaining)
-        yield self.event("select", cell, f"Chọn ô bằng MRV + Degree: domain "
-                         f"{sorted(self.domains[cell])}, {degree} ô lân cận chưa gán. "
-                         f"Thứ tự thử theo LCV: {values}.")
+        yield self.event(
+            "select",
+            cell,
+            f"Chọn ô bằng MRV + Degree: domain "
+            f"{sorted(self.domains[cell])}, {degree} ô lân cận chưa gán. "
+            f"Thứ tự thử theo LCV: {values}.",
+        )
         for value in values:
             saved = {key: set(domain) for key, domain in self.domains.items()}
             self.statistics.branches += 1
             self.assignment[cell] = value
             self.domains[cell] = {value}
-            yield self.event("try", cell, f"Gán thử {value}; tiếp theo kiểm tra các ô lân cận.")
+            yield self.event(
+                "try", cell, f"Gán thử {value}; tiếp theo kiểm tra các ô lân cận."
+            )
             valid = yield from self.forward_check(cell)
             if valid and (yield from self.backtrack()):
                 return True

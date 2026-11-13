@@ -22,7 +22,7 @@ def small_board(across=(3, 7), down=(4, 6)):
 
 class SolverTests(unittest.TestCase):
     def test_boards_match_html(self):
-        root = Path(__file__).resolve().parents[1]
+        root = Path(__file__).resolve().parents[1] / "boards"
         for board, filename in zip(BOARDS, ("kakuro_demo.html", "kakuro_task.html")):
             text = (root / filename).read_text(encoding="utf-8")
             raw = re.search(r"const grid = (\[.*?\]);", text, re.S).group(1)

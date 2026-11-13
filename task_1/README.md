@@ -2,9 +2,9 @@
 
 ## Run
 
-```bash
-python -m pip install -r requirements.txt
-python app.py
+```powershell
+python -m pip install -r task_1/requirements.txt
+python -m task_1
 ```
 
 ## Structure
@@ -13,7 +13,9 @@ python app.py
 - `sat.py`: CNF encoders and Glucose3 solver
 - `core.py`: Min-Conflicts + solution verifier
 - `experiments.py`: benchmark and CSV
-- `test_core.py`: independent core unit tests
+- `tests/test_core.py`: independent core unit tests
+- `__init__.py`: public `NQueensPage` API for the group launcher
+- `__main__.py`: standalone entry point
 
 ## UI notes
 
@@ -22,6 +24,7 @@ python app.py
 - The timer *requests* a refresh every 8 ms; Qt does not guarantee 120 visible FPS.
 - Workers run outside the GUI thread so solving does not block interactions.
 - `NQueensPage` is a QWidget and may be inserted into the group's launcher `QStackedWidget`.
+- Import for integration with `from task_1 import NQueensPage`; do not modify `sys.path`.
 - The chessboard directly uses QPainter rather than static images.
 
 ## Academic note

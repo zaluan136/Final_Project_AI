@@ -71,6 +71,7 @@ class UITests(unittest.TestCase):
         embedded = KakuroWidget(parent=parent)
         self.assertIs(embedded.parent(), parent)
         self.assertIs(embedded.solver.csp.board, DEMO)
+        self.assertEqual(embedded.styleSheet(), "")
         parent.deleteLater()
 
     def test_close_stops_timer(self):

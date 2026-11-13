@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Kakuro 5×5</title>
+    <title>Kakuro 9×9</title>
     <style>
       :root {
-        --size: 72px;
+        --size: 64px;
         --border: 2px solid #111;
         --clue-bg: #d9d9d9;
       }
@@ -34,8 +34,8 @@
       }
       .board {
         display: grid;
-        grid-template-columns: repeat(5, var(--size));
-        grid-template-rows: repeat(5, var(--size));
+        grid-template-columns: repeat(9, var(--size));
+        grid-template-rows: repeat(9, var(--size));
         width: fit-content;
         border-left: var(--border);
         border-top: var(--border);
@@ -58,7 +58,7 @@
         border: 0;
         outline: 0;
         text-align: center;
-        font-size: 30px;
+        font-size: 28px;
         background: transparent;
       }
       .block,
@@ -79,12 +79,14 @@
         );
         pointer-events: none;
       }
+      /* Image diagonal runs top-left -> bottom-right.
+     CSS gradient above draws the same divider visually. */
       .down {
         position: absolute;
         left: 8px;
         bottom: 7px;
         font-weight: 700;
-        font-size: 18px;
+        font-size: 17px;
         z-index: 1;
       }
       .across {
@@ -92,16 +94,25 @@
         right: 8px;
         top: 7px;
         font-weight: 700;
-        font-size: 18px;
+        font-size: 17px;
         z-index: 1;
+      }
+      .coords {
+        margin-top: 16px;
+        font:
+          13px ui-monospace,
+          SFMono-Regular,
+          Consolas,
+          monospace;
+        white-space: pre;
       }
     </style>
   </head>
   <body>
-    <h1>Kakuro 5×5</h1>
+    <h1>Kakuro 9×9</h1>
     <div class="legend">
-      Góc trên-phải = <b>A</b> (sang phải) · góc dưới-trái = <b>D</b> (đi
-      xuống).
+      Clue góc trên-phải = <b>A</b> (sang phải) - clue góc dưới-trái =
+      <b>D</b> (đi xuống). Ô trắng có thể nhập trực tiếp.
     </div>
 
     <div id="board" class="board"></div>
@@ -111,39 +122,104 @@
         [
           { kind: "block" },
           { kind: "block" },
-          { kind: "clue", down: 21 },
+          { kind: "clue", down: 44 },
+          { kind: "clue", down: 16 },
+          { kind: "clue", down: 9 },
+          { kind: "block" },
+          { kind: "clue", down: 15 },
+          { kind: "clue", down: 44 },
+          { kind: "block" },
+        ],
+        [
+          { kind: "block" },
+          { kind: "clue", across: 22 },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "clue", down: 11, across: 3 },
+          { kind: "cell" },
+          { kind: "cell" },
           { kind: "clue", down: 14 },
-          { kind: "block" },
         ],
         [
           { kind: "block" },
-          { kind: "clue", down: 14, across: 12 },
+          { kind: "clue", down: 17, across: 28 },
           { kind: "cell" },
           { kind: "cell" },
-          { kind: "clue", down: 11 },
-        ],
-        [
-          { kind: "clue", across: 21 },
+          { kind: "cell" },
           { kind: "cell" },
           { kind: "cell" },
           { kind: "cell" },
           { kind: "cell" },
         ],
         [
-          { kind: "clue", across: 11 },
+          { kind: "clue", across: 14 },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "block" },
+          { kind: "clue", down: 12, across: 20 },
           { kind: "cell" },
           { kind: "cell" },
           { kind: "cell" },
           { kind: "cell" },
+        ],
+        [
+          { kind: "clue", across: 17 },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "clue", down: 29, across: 22 },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "clue", down: 7 },
+        ],
+        [
+          { kind: "block" },
+          { kind: "clue", down: 12, across: 28 },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "clue", across: 12 },
+          { kind: "cell" },
+          { kind: "cell" },
+        ],
+        [
+          { kind: "clue", across: 14 },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "clue", down: 7 },
+          { kind: "clue", down: 12, across: 6 },
+          { kind: "cell" },
+          { kind: "cell" },
+        ],
+        [
+          { kind: "clue", across: 39 },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "block" },
         ],
         [
           { kind: "block" },
           { kind: "clue", across: 16 },
           { kind: "cell" },
           { kind: "cell" },
+          { kind: "clue", across: 8 },
+          { kind: "cell" },
+          { kind: "cell" },
+          { kind: "cell" },
           { kind: "block" },
         ],
       ];
+
       const board = document.getElementById("board");
 
       grid.forEach((row, r) => {
@@ -164,14 +240,12 @@
             el.appendChild(input);
           } else if (cell.kind === "clue") {
             el.classList.add("clue");
-
             if (cell.down !== undefined) {
               const d = document.createElement("span");
               d.className = "down";
               d.textContent = cell.down;
               el.appendChild(d);
             }
-
             if (cell.across !== undefined) {
               const a = document.createElement("span");
               a.className = "across";

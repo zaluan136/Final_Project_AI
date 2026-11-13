@@ -2,6 +2,7 @@ from PySide6.QtCore import QRectF, Qt, QTimer
 from PySide6.QtGui import QColor, QFont, QPainter, QPen
 from PySide6.QtWidgets import (
     QComboBox,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QPlainTextEdit,
@@ -12,8 +13,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ui import MATERIAL_QSS, set_button_icon
+
 from .boards import BOARDS
 from .solver import KakuroSolver
+
+STANDALONE_STYLES = MATERIAL_QSS
 
 
 class BoardView(QWidget):
@@ -107,25 +112,21 @@ class BoardView(QWidget):
 class KakuroWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Kakuro · Constraint Satisfaction Problem")
-        self.setStyleSheet("""
-            QWidget { background: #ffffff; color: #111111; font-size: 13px; }
-            QPushButton, QComboBox { border: 1px solid #999999; padding: 7px 12px; }
-            QPushButton:hover { background: #ededed; }
-            QPushButton:disabled { color: #999999; }
-            QPlainTextEdit { border: 1px solid #cccccc; background: #f5f5f5; }
-            QSlider::groove:horizontal { height: 4px; background: #d9d9d9; }
-            QSlider::sub-page:horizontal { background: #555555; }
-            QSlider::handle:horizontal { width: 12px; margin: -5px 0; background: #111111; }
-        """)
+        self.setWindowTitle("Kakuro - Constraint Satisfaction Problem")
+        self.setObjectName("root")
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.advance)
         self.board_picker = QComboBox()
         self.board_picker.addItems([board.name for board in BOARDS])
         self.run_button = QPushButton("Chạy")
+        self.run_button.setObjectName("primary")
         self.pause_button = QPushButton("Tạm dừng")
         self.step_button = QPushButton("Bước tiếp")
         self.reset_button = QPushButton("Đặt lại")
+        set_button_icon(self.run_button, "play")
+        set_button_icon(self.pause_button, "pause")
+        set_button_icon(self.step_button, "next")
+        set_button_icon(self.reset_button, "reset")
         self.speed = QSlider(Qt.Orientation.Horizontal)
         self.speed.setRange(1, 100)
         self.speed.setValue(65)
@@ -156,18 +157,27 @@ class KakuroWidget(QWidget):
         self.log = QPlainTextEdit()
         self.log.setReadOnly(True)
         self.log.setMaximumBlockCount(1200)
-        sidebar = QVBoxLayout()
-        sidebar.addWidget(QLabel("BACKTRACKING + FORWARD CHECKING\nMRV · Degree · LCV"))
+        inspector = QFrame()
+        inspector.setObjectName("panel")
+        sidebar = QVBoxLayout(inspector)
+        sidebar.setContentsMargins(18, 18, 18, 18)
+        sidebar.setSpacing(12)
+        method = QLabel("BACKTRACKING + FORWARD CHECKING\nMRV - Degree - LCV")
+        method.setObjectName("section")
+        sidebar.addWidget(method)
+        self.status.setObjectName("status")
         sidebar.addWidget(self.status)
         sidebar.addWidget(self.run_details)
         sidebar.addWidget(self.statistics_label)
         sidebar.addWidget(self.log, 1)
         content = QHBoxLayout()
         content.addWidget(scroll, 3)
-        content.addLayout(sidebar, 2)
+        content.addWidget(inspector, 2)
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(28, 24, 28, 24)
+        layout.setSpacing(14)
         title = QLabel("KAKURO / CSP")
-        title.setStyleSheet("font-size: 23px; font-weight: bold; padding: 5px 0;")
+        title.setObjectName("heading")
         layout.addWidget(title)
         layout.addLayout(controls)
         layout.addWidget(
@@ -178,7 +188,7 @@ class KakuroWidget(QWidget):
         layout.addLayout(content, 1)
         layout.addWidget(
             QLabel(
-                "Viền đậm: ô đang xét · Nền xám nhạt: các dãy liên quan · ∅: domain rỗng"
+                "Viền đậm: ô đang xét - Nền xám nhạt: các dãy liên quan - ∅: domain rỗng"
             )
         )
         self.run_button.clicked.connect(self.start)
@@ -207,10 +217,10 @@ class KakuroWidget(QWidget):
         self.board_view.set_board(board)
         self.status.setText("Sẵn sàng. Chọn Chạy hoặc Bước tiếp.")
         self.run_details.setText(
-            f"{len(board.variables)} biến · {len(board.runs)} ràng buộc dãy"
+            f"{len(board.variables)} biến - {len(board.runs)} ràng buộc dãy"
         )
         self.statistics_label.setText(
-            "Thời gian solver: 0 s · Thử: 0 · Backtrack: 0 · Loại: 0"
+            "Thời gian solver: 0 s - Thử: 0 - Backtrack: 0 - Loại: 0"
         )
         self.log.clear()
         self.update_speed()
@@ -257,22 +267,26 @@ class KakuroWidget(QWidget):
                     for cell in run.cells
                     if cell in event.assignment
                 ]
-                details.append(f"{run.label} · đã gán {sum(values)}/{run.total}")
+                details.append(f"{run.label} - đã gán {sum(values)}/{run.total}")
             self.run_details.setText("\n".join(details))
         self.status.setText(prefix + event.message)
         labels = {
-            "start": "BẮT ĐẦU", "select": "CHỌN Ô", "try": "GÁN THỬ",
-            "prune": "FORWARD CHECKING", "failure": "THẤT BẠI",
-            "restore": "BACKTRACK", "complete": "KẾT THÚC",
+            "start": "BẮT ĐẦU",
+            "select": "CHỌN Ô",
+            "try": "GÁN THỬ",
+            "prune": "FORWARD CHECKING",
+            "failure": "THẤT BẠI",
+            "restore": "BACKTRACK",
+            "complete": "KẾT THÚC",
         }
         depth = len(event.assignment)
         self.log.appendPlainText(
-            f"[{labels[event.kind]}] Đã gán {depth} ô · {prefix}{event.message}\n"
+            f"[{labels[event.kind]}] Đã gán {depth} ô - {prefix}{event.message}\n"
         )
         statistics = event.statistics
         self.statistics_label.setText(
             f"Thời gian solver: {statistics.elapsed:.4f} s\n"
-            f"Thử: {statistics.branches} · Backtrack: {statistics.backtracks} · Loại: {statistics.pruned}"
+            f"Thử: {statistics.branches} - Backtrack: {statistics.backtracks} - Loại: {statistics.pruned}"
         )
         if event.kind == "complete":
             self.finished = True

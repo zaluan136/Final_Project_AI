@@ -1,6 +1,6 @@
 # Task 3 — Kakuro CSP
 
-Ứng dụng trình diễn Kakuro theo OOP, sử dụng Backtracking Search, Forward checking, MRV, Degree và LCV của Lecture 8. Hai đề được chép nguyên cấu trúc và clue từ `kakuro_demo.html` và `kakuro_task.html`; các tệp HTML giữ nguyên.
+Ứng dụng trình diễn Kakuro theo OOP, sử dụng Backtracking Search, Forward checking, MRV, Degree và LCV của Lecture 8. Hai đề được chép nguyên cấu trúc và clue từ `boards/kakuro_demo.html` và `boards/kakuro_task.html`; các tệp HTML giữ nguyên.
 
 ## Cài đặt và chạy
 
@@ -83,6 +83,7 @@ Không dùng AC-3, Min-conflicts hay thuật toán tìm kiếm khác. Mục tiê
 - Sự kiện gồm `kind`, `cell`, `message`, `assignment`, `domains` và `statistics`. Các loại là `start`, `select`, `try`, `prune`, `failure`, `restore`, `complete`.
 - `KakuroWidget(parent=None)` là widget ghép launcher. Import `from task_3 import KakuroWidget`, rồi thêm vào layout hoặc stacked widget của ứng dụng hiện có. Widget không tự tạo `QApplication` hay gọi `exec()`.
 - Entry point `python -m task_3` tạo ứng dụng riêng. Không chỉnh Task 1 hoặc Task 2.
+- Khi chạy độc lập, entry point áp dụng theme trắng–xám mặc định. Khi nhúng `KakuroWidget` vào launcher, các control kế thừa stylesheet của launcher; màu bàn Kakuro vẫn được vẽ cố định theo màu đề.
 
 ### Ghép Task 1 PySide6 và Task 2 Pygame
 

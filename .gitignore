@@ -2,3 +2,11 @@ __pycache__/
 *.py[cod]
 .venv/
 AGENTS.MD
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.idea/
+.vscode/
+*.log
+*.csv

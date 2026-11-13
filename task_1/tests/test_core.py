@@ -1,7 +1,7 @@
 """Unit tests independent of the optional PySAT dependency."""
 import unittest
-from core import verify_solution, MinConflictsSolver
-from sat import square_var
+from ..core import MinConflictsSolver, verify_solution
+from ..sat import square_var
 
 
 class TestNQueens(unittest.TestCase):

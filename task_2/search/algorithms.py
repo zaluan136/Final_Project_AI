@@ -7,9 +7,9 @@ use a documented cheap prediction policy, so multi-tank search is approximate.
 from dataclasses import dataclass
 from itertools import product
 from time import perf_counter
-from Task2.core.state import Action
-from Task2.search.evaluation import evaluate,terminal_value
-from Task2.search.tactics import action_priorities
+from task_2.core.state import Action
+from task_2.search.evaluation import evaluate,terminal_value
+from task_2.search.tactics import action_priorities
 
 @dataclass(frozen=True)
 class SearchConfig:

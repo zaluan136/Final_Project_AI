@@ -1,7 +1,7 @@
 """Per-tank search configuration and nemesis selection."""
 from random import Random
-from Task2.search.algorithms import Searcher, SearchConfig
-from Task2.memory.memory import MovementMemory
+from task_2.search.algorithms import Searcher, SearchConfig
+from task_2.memory.memory import MovementMemory
 
 CONFIGURATIONS={
     'minimax':(False,False),

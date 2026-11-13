@@ -1,6 +1,6 @@
 """Lecture 07 pp.27-29: cheap EVAL; terminal UTILITY always dominates."""
 WIN_SCORE=100_000
-from Task2.search.tactics import route, base_threats, bullet_cells
+from task_2.search.tactics import route, base_threats, bullet_cells
 
 def terminal_value(outcome,team):
     return 0 if outcome.winner is None else (WIN_SCORE if outcome.winner==team else -WIN_SCORE)

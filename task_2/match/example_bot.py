@@ -1,6 +1,7 @@
 """Example plugin: select this file for a tank in the temporary UI."""
-from Task2.core.rules import GameRules
-from Task2.search.algorithms import predicted_action
+
+from task_2.core.rules import GameRules
+from task_2.search.algorithms import predicted_action
 
 
 def choose_action(state, tank_id, draft, deadline):

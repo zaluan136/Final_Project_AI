@@ -1,0 +1,182 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{textcomp}
+
+% Fill in every [PLACEHOLDER] and remove the guidance comments before submission.
+% Keep the final PDF within five pages, including figures and references.
+% Compile from the repository root: pdflatex -output-directory=docs docs/report.tex
+
+\begin{document}
+
+\title{[Project Title]}
+
+% Add or remove student author blocks as needed. The lecturer must be last.
+\author{
+\IEEEauthorblockN{Nguyen Hoa Khang}
+\IEEEauthorblockA{524H0098\\
+{Department, Institution}\\
+{524H0098@student.tdtu.edu.vn}}
+\and
+\IEEEauthorblockN{Ly Gia Luan}
+\IEEEauthorblockA{524H0101\\
+{Department, Institution}\\
+{524H0101@student.tdtu.edu.vn}}
+\and
+\IEEEauthorblockN{Nguyen Thai Khoa}
+\IEEEauthorblockA{524H0109\\
+{Department, Institution}\\
+{524H0109@student.tdtu.edu.vn}}
+\and
+\IEEEauthorblockN{MSc. Nguyen Thanh An}
+\IEEEauthorblockA{Faculty of Information Technology, Ton Duc Thang University\\
+{nguyenthanhan@tdtu.edu.vn}}
+}
+\maketitle
+
+\begin{abstract}
+[State the project requirements and the three problems. Summarize the
+approaches used, the measured experimental results, and the completion level
+of each task. Use verified results and include no citations in the abstract.]
+\end{abstract}
+
+\begin{IEEEkeywords}
+[N-Queens], [adversarial search], [Kakuro], [constraint satisfaction]
+\end{IEEEkeywords}
+
+\section{Introduction}
+[Introduce the project objectives, the three tasks, and the scope of this
+report. Briefly explain how the experimental results are evaluated.]
+
+\section{N-Queens with SAT and Local Search}
+\subsection{Problem and Approach}
+[Define the N-Queens problem. Describe the SAT encoding and the
+Min-Conflicts method actually implemented. Cite relevant sources.]
+
+\subsection{Experimental Results}
+[Describe the test inputs, environment, measurement procedure, and results.
+Discuss success and limitations without interpreting a search timeout as a
+proof of unsatisfiability. Replace the example columns if needed.]
+
+\begin{table}[htbp]
+\caption{N-Queens Experimental Results}
+\label{tab:queens}
+\centering
+\begin{tabular}{lccc}
+\hline
+Method & $N$ & Time (ms) & Result \\
+\hline
+[Method] & [N] & [Value] & [Result] \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Adversarial Search for Tank Battle}
+\subsection{Problem and Approach}
+[Describe the game state, available actions, evaluation, and implemented
+search methods, including Minimax and Alpha-Beta where applicable. Explain
+assumptions and limitations relevant to the implementation.]
+
+\subsection{Experimental Results}
+[State the scenarios, configurations, measurement method, and observed
+results. Use comparable settings and identify any approximations.]
+
+\begin{table}[htbp]
+\caption{Tank Battle Experimental Results}
+\label{tab:tank}
+\centering
+\begin{tabular}{lcc}
+\hline
+Method & [Metric 1] & [Metric 2] \\
+\hline
+[Method] & [Value] & [Value] \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Kakuro as a Constraint Satisfaction Problem}
+\subsection{Problem and Approach}
+[Define variables, domains, and constraints. Explain Backtracking and the
+roles of Forward Checking, MRV, Degree, and LCV as implemented. Cite sources.]
+
+\subsection{Experimental Results}
+[Identify the board, verification method, measured results, and limitations.
+Do not claim that the implementation uses AC-3 or proves uniqueness unless
+those claims are supported by the implementation and experiment.]
+
+\begin{table}[htbp]
+\caption{Kakuro Experimental Results}
+\label{tab:kakuro}
+\centering
+\begin{tabular}{lcc}
+\hline
+Board & [Metric] & Result \\
+\hline
+[Board] & [Value] & [Result] \\
+\hline
+\end{tabular}
+\end{table}
+
+% Optional figure example. Put the image in docs/figures/, cite it in the text,
+% and uncomment this block. The path below assumes compilation from the root.
+% \begin{figure}[htbp]
+% \centering
+% \includegraphics[width=\columnwidth]{docs/figures/example.png}
+% \caption{[Describe what the figure demonstrates.]}
+% \label{fig:example}
+% \end{figure}
+
+\section{Contributions}
+[Describe each member's individual work and completion level. Add one row per
+member; percentages must reflect the group's actual assessment.]
+
+\begin{table}[htbp]
+\caption{Individual Contributions}
+\label{tab:contributions}
+\centering
+\begin{tabular}{p{0.23\columnwidth}p{0.48\columnwidth}c}
+\hline
+Member / ID & Individual work & Completion \\
+\hline
+{[Name / ID]} & [Tasks and responsibilities] & [0--100\%] \\
+{[Name / ID]} & [Tasks and responsibilities] & [0--100\%] \\
+{[Name / ID]} & [Tasks and responsibilities] & [0--100\%] \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Self-Evaluation}
+[Evaluate each task against the assignment requirements. Record completion,
+missing work, and the estimated score using the assignment's actual rubric.]
+
+\begin{table}[htbp]
+\caption{Task Completion and Estimated Scores}
+\label{tab:evaluation}
+\centering
+\begin{tabular}{lccc}
+\hline
+Task & Completion & Score & Maximum \\
+\hline
+Task 1 & [\%] & [Score] & [Max] \\
+Task 2 & [\%] & [Score] & [Max] \\
+Task 3 & [\%] & [Score] & [Max] \\
+Report / interview & [\%] & [Score] & [Max] \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Conclusion}
+[Summarize the project requirements, approaches, measured results, and
+completion levels. State important limitations and possible future work.]
+
+% Replace the example with sources actually used, formatted in IEEE style.
+% Cite each source in the body with \cite{source1}; order entries by first use.
+\begin{thebibliography}{00}
+\bibitem{source1} [Author initials and surname], ``[Title],'' [Publication],
+vol. [volume], no. [number], pp. [pages], [year].
+\end{thebibliography}
+
+\end{document}

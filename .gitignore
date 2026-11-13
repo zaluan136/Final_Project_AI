@@ -10,3 +10,7 @@ htmlcov/
 .vscode/
 *.log
 *.csv
+*.aux
+*.fls
+*.fdb_latexmk
+*.synctex.gz

@@ -51,7 +51,7 @@ class Playground:
         self.action_font = pygame.font.SysFont("segoeui", 16, bold=True)
         self.title = pygame.font.SysFont("segoeui", 25, bold=True)
         self.clock = pygame.time.Clock()
-        self.asset_dir = Path(__file__).resolve().parent / "Asset"
+        self.asset_dir = Path(__file__).resolve().parent / "asset"
         self.sprites = {
             path.stem: pygame.image.load(str(path)).convert_alpha()
             for path in self.asset_dir.glob("*.png")

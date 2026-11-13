@@ -104,9 +104,11 @@ class LauncherWindow(QMainWindow):
         task_two_button.setObjectName("nav")
         set_button_icon(task_two_button, "game")
         task_two_button.clicked.connect(self.open_task_two)
-        navigation.insertWidget(navigation.indexOf(self.nav_buttons[2]), task_two_button)
+        navigation.insertWidget(
+            navigation.indexOf(self.nav_buttons[2]), task_two_button
+        )
         navigation.addStretch()
-        navigation.addWidget(label("524H0098  ·  524H0101  ·  524H0109", "muted"))
+        navigation.addWidget(label("524H0098  -  524H0101  -  524H0109", "muted"))
 
         shell.addWidget(sidebar)
         shell.addWidget(self.pages, 1)
@@ -127,7 +129,7 @@ class LauncherWindow(QMainWindow):
         cards.setSpacing(16)
         for title, description in (
             ("01   N-Queens", "SAT Solver và Min-Conflicts"),
-            ("02   Tank Battle", "Pygame · chạy trong cửa sổ riêng"),
+            ("02   Tank Battle", "Pygame - chạy trong cửa sổ riêng"),
             (
                 "03   Kakuro CSP",
                 "Backtracking, MRV, Degree, LCV và Forward Checking",

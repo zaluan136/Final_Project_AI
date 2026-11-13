@@ -13,19 +13,17 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ui import MATERIAL_QSS, set_button_icon
+from ui import set_button_icon
 
 from .boards import BOARDS
-from .solver import KakuroSolver
-
-STANDALONE_STYLES = MATERIAL_QSS
+from .solver import KakuroSolver, SolverEvent
 
 
 class BoardView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.board = None
-        self.current_event = None
+        self.current_event: SolverEvent | None = None
         self.cell_size = 66
 
     def set_board(self, board):
@@ -130,19 +128,7 @@ class KakuroWidget(QWidget):
         self.speed = QSlider(Qt.Orientation.Horizontal)
         self.speed.setRange(1, 100)
         self.speed.setValue(65)
-        self.speed.setFixedWidth(110)
-        controls = QHBoxLayout()
-        for widget in (
-            self.board_picker,
-            self.run_button,
-            self.pause_button,
-            self.step_button,
-            self.reset_button,
-            QLabel("Tốc độ"),
-            self.speed,
-        ):
-            controls.addWidget(widget)
-        controls.addStretch()
+        self.speed.setMinimumWidth(120)
         self.board_view = BoardView()
         scroll = QScrollArea()
         scroll.setWidget(self.board_view)
@@ -159,38 +145,61 @@ class KakuroWidget(QWidget):
         self.log.setMaximumBlockCount(1200)
         inspector = QFrame()
         inspector.setObjectName("panel")
+        inspector.setMinimumWidth(280)
+        inspector.setMaximumWidth(360)
         sidebar = QVBoxLayout(inspector)
-        sidebar.setContentsMargins(18, 18, 18, 18)
+        sidebar.setContentsMargins(20, 20, 20, 20)
         sidebar.setSpacing(12)
-        method = QLabel("BACKTRACKING + FORWARD CHECKING\nMRV - Degree - LCV")
+        method = QLabel("Điều khiển")
         method.setObjectName("section")
         sidebar.addWidget(method)
+        sidebar.addWidget(QLabel("Bàn chơi"))
+        sidebar.addWidget(self.board_picker)
+        actions = QHBoxLayout()
+        actions.addWidget(self.run_button)
+        actions.addWidget(self.pause_button)
+        sidebar.addLayout(actions)
+        actions2 = QHBoxLayout()
+        actions2.addWidget(self.step_button)
+        actions2.addWidget(self.reset_button)
+        sidebar.addLayout(actions2)
+        sidebar.addWidget(QLabel("Tốc độ"))
+        sidebar.addWidget(self.speed)
+        sidebar.addSpacing(8)
+        activity = QLabel("Tiến trình")
+        activity.setObjectName("section")
+        sidebar.addWidget(activity)
         self.status.setObjectName("status")
         sidebar.addWidget(self.status)
         sidebar.addWidget(self.run_details)
         sidebar.addWidget(self.statistics_label)
         sidebar.addWidget(self.log, 1)
         content = QHBoxLayout()
-        content.addWidget(scroll, 3)
-        content.addWidget(inspector, 2)
+        content.setSpacing(16)
+        board_panel = QFrame()
+        board_panel.setObjectName("card")
+        board_layout = QVBoxLayout(board_panel)
+        board_layout.setContentsMargins(20, 20, 20, 20)
+        board_title = QLabel("Bàn Kakuro")
+        board_title.setObjectName("section")
+        board_layout.addWidget(board_title)
+        board_layout.addWidget(scroll, 1)
+        legend = QLabel("Số nhỏ: domain  ·  Số lớn: đã gán  ·  Viền đậm: ô đang xét")
+        legend.setObjectName("muted")
+        legend.setWordWrap(True)
+        board_layout.addWidget(legend)
+        content.addWidget(board_panel, 1)
+        content.addWidget(inspector)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 24)
         layout.setSpacing(14)
-        title = QLabel("KAKURO / CSP")
+        title = QLabel("Kakuro")
         title.setObjectName("heading")
         layout.addWidget(title)
-        layout.addLayout(controls)
-        layout.addWidget(
-            QLabel(
-                "Clue: trên phải = ngang; dưới trái = dọc. Số nhỏ = domain; số lớn = đã gán."
-            )
-        )
+        subtitle = QLabel("Backtracking · Forward Checking · MRV · Degree · LCV")
+        subtitle.setObjectName("muted")
+        layout.addWidget(subtitle)
         layout.addLayout(content, 1)
-        layout.addWidget(
-            QLabel(
-                "Viền đậm: ô đang xét - Nền xám nhạt: các dãy liên quan - ∅: domain rỗng"
-            )
-        )
         self.run_button.clicked.connect(self.start)
         self.pause_button.clicked.connect(self.pause)
         self.step_button.clicked.connect(self.step)

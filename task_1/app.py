@@ -1,5 +1,3 @@
-"""N-Queens Studio: standalone PySide6 frontend, independent of group launcher."""
-
 from __future__ import annotations
 from time import perf_counter
 
@@ -26,15 +24,14 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QSizePolicy,
     QScrollArea,
+    QTabBar,
 )
 
-from ui import MATERIAL_QSS, icon_path, set_button_icon
+from ui import icon_path, set_button_icon
 
 from .core import MinConflictsSolver, verify_solution
 from .experiments import export_csv, local_experiments, sat_experiments
 from .sat import CNFEncoder, SATSolver
-
-STYLES = MATERIAL_QSS
 
 
 def text(s: str, kind: str = "", size: int | None = None) -> QLabel:
@@ -59,8 +56,6 @@ def card() -> tuple[QFrame, QVBoxLayout]:
 
 
 class Chessboard(QWidget):
-    """Paint squares and queens directly; render at high DPI, no OS glyph dependency."""
-
     def __init__(self):
         super().__init__()
         self.n = 8
@@ -148,8 +143,6 @@ class BenchWorker(QThread):
 
 
 class NQueensPage(QWidget):
-    """Importable game page: parent launcher can add this widget to QStackedWidget."""
-
     def __init__(self, parent=None, embedded=False):
         super().__init__(parent)
         self.embedded = embedded
@@ -164,73 +157,26 @@ class NQueensPage(QWidget):
         self._build()
 
     def _build(self):
-        root = QHBoxLayout(self)
-        root.setContentsMargins(0, 0, 0, 0)
-        root.setSpacing(0)
-        sidebar = QFrame()
-        sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(236)
-        nav = QVBoxLayout(sidebar)
-        nav.setContentsMargins(18, 27, 18, 18)
-        nav.setSpacing(12)
-        if not self.embedded:
-            nav.addWidget(text("AI GAME LAB", "heading", 18))
-            nav.addWidget(text("TASK 01  /  N-QUEENS", "muted", 10))
-            nav.addSpacing(24)
-        self.nav_buttons = []
-        for label, icon_name, index in [
-            ("Solve & Visualize", "queen", 0),
-            ("CNF Analysis", "document", 1),
-            ("Benchmark", "chart", 2),
-        ]:
-            btn = QPushButton(label)
-            btn.setObjectName("navigation")
-            btn.setProperty("active", index == 0)
-            set_button_icon(btn, icon_name)
-            btn.clicked.connect(lambda _, i=index: self._go(i))
-            nav.addWidget(btn)
-            self.nav_buttons.append(btn)
-        nav.addStretch(1)
-        if not self.embedded:
-            nav.addWidget(text("Designed for group integration", "muted", 10))
-            nav.addWidget(text("N-Queens - Tank Battle - Kakuro", "muted", 9))
-        if not self.embedded:
-            root.addWidget(sidebar)
-        main = QWidget()
-        main.setObjectName("root")
-        ml = QVBoxLayout(main)
-        ml.setContentsMargins(28, 22, 28, 22)
-        ml.setSpacing(18)
-        if self.embedded:
-            tabs = QHBoxLayout()
-            tabs.setSpacing(6)
-            for button in self.nav_buttons:
-                tabs.addWidget(button)
-            tabs.addStretch()
-            ml.addLayout(tabs)
-        header = QHBoxLayout()
-        titlecol = QVBoxLayout()
-        titlecol.setSpacing(2)
-        titlecol.addWidget(text("N-Queens Studio", "heading"))
-        titlecol.addWidget(
-            text("SAT solving, CNF encoding & local search experiments", "muted")
-        )
-        header.addLayout(titlecol)
-        header.addStretch()
-        ml.addLayout(header)
+        ml = QVBoxLayout(self)
+        ml.setContentsMargins(28, 24, 28, 24)
+        ml.setSpacing(14)
+        ml.addWidget(text("N-Queens", "heading"))
+        ml.addWidget(text("Explore solutions, constraints and performance.", "muted"))
+        self.pivot = QTabBar()
+        self.pivot.setExpanding(False)
+        for title in ("Solve", "CNF analysis", "Benchmark"):
+            self.pivot.addTab(title)
+        self.pivot.currentChanged.connect(self._go)
+        ml.addWidget(self.pivot)
         self.pages = QStackedWidget()
         ml.addWidget(self.pages, 1)
         self._solve_page()
         self._cnf_page()
         self._bench_page()
-        root.addWidget(main, 1)
 
     def _go(self, index):
         self.pages.setCurrentIndex(index)
-        for i, btn in enumerate(self.nav_buttons):
-            btn.setProperty("active", i == index)
-            btn.style().unpolish(btn)
-            btn.style().polish(btn)
+        self.pivot.setCurrentIndex(index)
         if index == 1:
             self._update_cnf()
 
@@ -526,7 +472,8 @@ class NQueensPage(QWidget):
             "Mean total (ms)",
             "Median (ms)",
         ]
-        self.b_table = QTableWidget(0, len(cols))
+        self.b_table = QTableWidget()
+        self.b_table.setColumnCount(len(cols))
         self.b_table.setHorizontalHeaderLabels(cols)
         self.b_table.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.ResizeToContents

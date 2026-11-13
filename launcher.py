@@ -1,5 +1,3 @@
-"""Group launcher for the three AI final-project tasks."""
-
 from __future__ import annotations
 
 import importlib.util
@@ -19,7 +17,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ui import MATERIAL_QSS, set_button_icon
+from ui import set_button_icon
 from task_3 import KakuroWidget
 
 
@@ -42,7 +40,6 @@ def message_page(title: str, message: str) -> QWidget:
 
 
 def task_one_page() -> QWidget:
-    """Load Task 1 only through its clean public package API."""
     try:
         from task_1 import NQueensPage
     except (ImportError, ModuleNotFoundError) as exc:
@@ -76,12 +73,12 @@ class LauncherWindow(QMainWindow):
 
         sidebar = QFrame()
         sidebar.setObjectName("sidebar")
-        sidebar.setFixedWidth(248)
+        sidebar.setFixedWidth(228)
         navigation = QVBoxLayout(sidebar)
         navigation.setContentsMargins(20, 28, 20, 20)
         navigation.setSpacing(10)
-        navigation.addWidget(label("FINAL PROJECT", "title"))
-        navigation.addWidget(label("GROUP 9", "eyebrow"))
+        navigation.addWidget(label("AI PROJECT", "brand"))
+        navigation.addWidget(label("INTRODUCTION TO AI  /  GROUP 9", "eyebrow"))
         navigation.addSpacing(18)
 
         self.pages = QStackedWidget()
@@ -97,6 +94,7 @@ class LauncherWindow(QMainWindow):
         ):
             button = QPushButton(title)
             button.setObjectName("nav")
+            button.setCheckable(True)
             set_button_icon(button, icon_name)
             button.clicked.connect(lambda _, index=page_index: self.show_page(index))
             navigation.addWidget(button)
@@ -106,9 +104,9 @@ class LauncherWindow(QMainWindow):
         task_two_button.setObjectName("nav")
         set_button_icon(task_two_button, "game")
         task_two_button.clicked.connect(self.open_task_two)
-        navigation.addWidget(task_two_button)
+        navigation.insertWidget(navigation.indexOf(self.nav_buttons[2]), task_two_button)
         navigation.addStretch()
-        navigation.addWidget(label("524H0098 - 524H0101 - 524H0109"))
+        navigation.addWidget(label("524H0098  ·  524H0101  ·  524H0109", "muted"))
 
         shell.addWidget(sidebar)
         shell.addWidget(self.pages, 1)
@@ -120,32 +118,39 @@ class LauncherWindow(QMainWindow):
         layout.setContentsMargins(40, 36, 40, 36)
         layout.setSpacing(16)
         layout.addWidget(label("Introduction to Artificial Intelligence", "pageTitle"))
-        layout.addWidget(label("Chọn một task ở thanh điều hướng để bắt đầu.", "muted"))
+        layout.addWidget(
+            label("Tổng quan các bài toán và phương pháp trong dự án.", "muted")
+        )
+        layout.addSpacing(12)
 
+        cards = QHBoxLayout()
+        cards.setSpacing(16)
         for title, description in (
-            ("Task 1 - N-Queens", "SAT Solver và Min-Conflicts"),
-            ("Task 2 - Tank Battle", "Chạy trong tiến trình và cửa sổ riêng"),
+            ("01   N-Queens", "SAT Solver và Min-Conflicts"),
+            ("02   Tank Battle", "Pygame · chạy trong cửa sổ riêng"),
             (
-                "Task 3 - Kakuro CSP",
+                "03   Kakuro CSP",
                 "Backtracking, MRV, Degree, LCV và Forward Checking",
             ),
         ):
             card = QFrame()
             card.setObjectName("card")
+            card.setFixedHeight(190)
             card_layout = QVBoxLayout(card)
-            card_layout.setContentsMargins(22, 19, 22, 19)
+            card_layout.setContentsMargins(24, 24, 24, 24)
+            card_layout.setSpacing(12)
             card_layout.addWidget(label(title, "cardTitle"))
             card_layout.addWidget(label(description, "muted"))
-            layout.addWidget(card)
+            card_layout.addStretch()
+            cards.addWidget(card, 1)
+        layout.addLayout(cards)
         layout.addStretch()
         return page
 
     def show_page(self, index: int) -> None:
         self.pages.setCurrentIndex(index)
         for button_index, button in enumerate(self.nav_buttons):
-            button.setProperty("active", button_index == index)
-            button.style().unpolish(button)
-            button.style().polish(button)
+            button.setChecked(button_index == index)
 
     def open_task_two(self) -> None:
         if self.task_two.state() != QProcess.ProcessState.NotRunning:
@@ -173,8 +178,6 @@ class LauncherWindow(QMainWindow):
 
 def main() -> int:
     app = QApplication.instance() or QApplication(sys.argv)
-    app.setStyle("Fusion")
-    app.setStyleSheet(MATERIAL_QSS)
     window = LauncherWindow()
     window.show()
     return app.exec()

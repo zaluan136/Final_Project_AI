@@ -25,7 +25,11 @@ class SolverTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1] / "boards"
         for board, filename in zip(BOARDS, ("kakuro_demo.html", "kakuro_task.html")):
             text = (root / filename).read_text(encoding="utf-8")
-            raw = re.search(r"const grid = (\[.*?\]);", text, re.S).group(1)
+            match = re.search(r"const grid = (\[.*?\]);", text, re.S)
+            self.assertIsNotNone(match)
+            if match is None:
+                self.fail(f"Không tìm thấy grid trong {filename}")
+            raw = match.group(1)
             raw = re.sub(r"(\w+)\s*:", r'"\1":', raw)
             raw = re.sub(r",\s*([}\]])", r"\1", raw)
             grid = json.loads(raw)
@@ -49,6 +53,8 @@ class SolverTests(unittest.TestCase):
                 solver = KakuroSolver(board)
                 solution = solver.solve()
                 self.assertIsNotNone(solution)
+                if solution is None:
+                    self.fail(f"Không tìm được lời giải cho {board.name}")
                 self.assertEqual(set(solution), set(board.variables))
                 self.assertTrue(
                     all(

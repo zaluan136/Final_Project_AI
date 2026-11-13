@@ -1,32 +1,38 @@
-# N-Queens Studio (PySide6) — study/reference project
+# Task 1 — N-Queens
 
-## Run
+Ứng dụng giải bài toán N-Queens bằng SAT hoặc Min-Conflicts và hiển thị lời giải trên bàn cờ. Bàn cờ được vẽ bằng PySide6; quân hậu dùng SVG.
+
+## Cài đặt và chạy
+
+Chạy các lệnh từ thư mục gốc của dự án:
 
 ```powershell
 python -m pip install -r task_1/requirements.txt
 python -m task_1
 ```
 
-## Structure
+Hoặc cài dependency của cả hai task Qt bằng `python -m pip install -r requirements.txt`, sau đó chạy `python launcher.py`. Task 1 cũng có thể được mở từ launcher. Giao diện dùng widget PySide6 và style mặc định của hệ điều hành.
 
-- `app.py`: high-contrast PySide6 interface, navigation, workers, elapsed time
-- `sat.py`: CNF encoders and Glucose3 solver
-- `core.py`: Min-Conflicts + solution verifier
-- `experiments.py`: benchmark and CSV
-- `tests/test_core.py`: independent core unit tests
-- `__init__.py`: public `NQueensPage` API for the group launcher
-- `__main__.py`: standalone entry point
+## Sử dụng
 
-## UI notes
+- Tab **Solve**: chọn kích thước bàn cờ và thuật toán, điều chỉnh tham số rồi nhấn **Solve N-Queens**. Nút **Reset board** xóa kết quả hiển thị.
+- Tab **CNF analysis**: xem số biến và số mệnh đề lý thuyết của mã hóa pairwise theo kích thước bàn cờ.
+- Tab **Benchmark**: chạy nhiều cấu hình SAT hoặc Min-Conflicts và xuất kết quả ra CSV.
 
-- For real SAT tests, PySAT must be installed.
-- Solver time, CNF build, solver initialization, and overall wall time are distinct measurements.
-- The timer *requests* a refresh every 8 ms; Qt does not guarantee 120 visible FPS.
-- Workers run outside the GUI thread so solving does not block interactions.
-- `NQueensPage` is a QWidget and may be inserted into the group's launcher `QStackedWidget`.
-- Import for integration with `from task_1 import NQueensPage`; do not modify `sys.path`.
-- The chessboard directly uses QPainter rather than static images.
+SAT dùng `python-sat` với Glucose3. Min-Conflicts là tìm kiếm cục bộ có giới hạn số bước và số lần khởi tạo lại; không tìm được lời giải trong giới hạn không chứng minh bài toán vô nghiệm. Giao diện kiểm tra tính hợp lệ trước khi vẽ kết quả.
 
-## Academic note
+Thời gian solver và thời gian toàn bộ lượt chạy là các phép đo khác nhau. Phép giải và benchmark chạy trong worker Qt để giao diện tiếp tục xử lý sự kiện.
 
-The provided final-project handout prohibits use of AI tools in the submitted project. This package is educational reference material and should not be submitted as AI-generated work.
+## Cấu trúc
+
+- `app.py`: widget giao diện, bàn cờ và worker.
+- `core.py`: Min-Conflicts và kiểm tra lời giải.
+- `sat.py`: mã hóa CNF và gọi SAT solver.
+- `experiments.py`: benchmark và xuất CSV.
+- `__init__.py`: xuất `NQueensPage` để launcher nhúng vào `QStackedWidget`.
+- `__main__.py`: tạo `QApplication` khi chạy độc lập.
+- `tests/`: kiểm thử thuật toán.
+
+```powershell
+python -m unittest task_1.tests.test_core -v
+```

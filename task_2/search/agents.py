@@ -1,7 +1,8 @@
 """Per-tank search configuration and nemesis selection."""
 from random import Random
-from Task2.search.algorithms import Searcher, SearchConfig
-from Task2.memory.memory import MovementMemory
+from threading import Event
+from task_2.search.algorithms import Searcher, SearchConfig
+from task_2.memory.memory import MovementMemory
 
 CONFIGURATIONS={
     'minimax':(False,False),
@@ -19,7 +20,7 @@ class SearchAgent:
         self.use_nemesis=use_nemesis
         self.nemesis=None
         self.last_result=None
-        self.cancel_event=None
+        self.cancel_event: Event | None = None
         self.memory=MovementMemory(tank_id)
 
     def observe_turn(self,before,action,after):

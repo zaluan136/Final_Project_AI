@@ -11,7 +11,7 @@ python -m pip install -r task_1/requirements.txt
 python -m task_1
 ```
 
-Hoặc cài dependency của cả hai task Qt bằng `python -m pip install -r requirements.txt`, sau đó chạy `python launcher.py`. Task 1 cũng có thể được mở từ launcher. Giao diện dùng widget PySide6 và style mặc định của hệ điều hành.
+Hoặc cài dependency của cả dự án bằng `python -m pip install -r requirements.txt`, sau đó chạy `python launcher.py`. Task 1 cũng có thể được mở từ launcher. Giao diện dùng widget PySide6 và style mặc định của hệ điều hành.
 
 ## Sử dụng
 

@@ -162,6 +162,13 @@ class LauncherWindow(QMainWindow):
                 "Launcher đang chờ entry point `python -m task_2`.",
             )
             return
+        if importlib.util.find_spec("pygame") is None:
+            QMessageBox.warning(
+                self,
+                "Thiếu Pygame",
+                "Cài dependency bằng lệnh: python -m pip install -r requirements.txt",
+            )
+            return
         self.task_two.start()
 
     def _task_two_error(self, _error: QProcess.ProcessError) -> None:

@@ -11,7 +11,7 @@ python -m pip install -r task_3/requirements.txt
 python -m task_3
 ```
 
-Có thể cài cả hai task Qt bằng `python -m pip install -r requirements.txt`, rồi chạy `python launcher.py` và chọn Task 3. Trên macOS hoặc Linux, dùng `python3` nếu lệnh Python của máy có tên đó. Kiểm tra phiên bản Python tương thích với PySide6 được khóa trong `requirements.txt`.
+Có thể cài dependency của cả dự án bằng `python -m pip install -r requirements.txt`, rồi chạy `python launcher.py` và chọn Task 3. Trên macOS hoặc Linux, dùng `python3` nếu lệnh Python của máy có tên đó. Kiểm tra phiên bản Python tương thích với PySide6 được khóa trong `requirements.txt`.
 
 Giao diện dùng PySide6 Widgets với style mặc định của hệ điều hành, không dùng QSS hay thư viện theme. Bàn Kakuro được vẽ bằng `QPainter` với màu trắng, xám và đen; các icon điều khiển dùng SVG.
 

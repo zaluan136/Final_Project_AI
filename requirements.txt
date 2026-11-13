@@ -1,2 +1,3 @@
 -r task_1/requirements.txt
+-r task_2/requirements.txt
 -r task_3/requirements.txt

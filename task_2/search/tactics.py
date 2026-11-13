@@ -5,7 +5,7 @@ They guide adversarial search, never replace the game's collision rules.
 """
 from functools import lru_cache
 from heapq import heappop, heappush
-from Task2.core.state import Action, Direction, Wall
+from task_2.core.state import Action, Direction, Wall
 
 
 def first_hit(state, x, y, direction):

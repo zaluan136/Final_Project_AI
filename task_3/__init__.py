@@ -1,7 +1,7 @@
 from .model import Board, Cell, KakuroCSP, Run
 from .solver import KakuroSolver
 
-__all__ = ["Board", "Cell", "KakuroCSP", "Run", "KakuroSolver", "KakuroWidget"] # type: ignore
+__all__ = ["Board", "Cell", "KakuroCSP", "Run", "KakuroSolver", "KakuroWidget"]  # type: ignore
 
 
 def __getattr__(name):

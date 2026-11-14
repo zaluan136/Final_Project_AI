@@ -46,9 +46,9 @@ def task_one_page() -> QWidget:
     except (ImportError, ModuleNotFoundError) as exc:
         return message_page(
             "Task 1 - N-Queens",
-            "Task 1 chưa cung cấp package `task_1` với API `NQueensPage`. "
-            "Sau khi module hóa đúng cấu trúc, launcher sẽ tự nhúng trang tại đây.\n\n"
-            f"Chi tiết hiện tại: {exc}",
+            "Task 1 does not provide the `task_1` package with the `NQueensPage` API. "
+            "Once the module has the expected structure, the launcher will embed it here.\n\n"
+            f"Details: {exc}",
         )
     return NQueensPage(embedded=True)
 
@@ -110,35 +110,32 @@ class LauncherWindow(QMainWindow):
     def _home_page(self) -> QWidget:
         page = QWidget()
         layout = QVBoxLayout(page)
-        layout.setContentsMargins(40, 36, 40, 36)
-        layout.setSpacing(16)
-        layout.addWidget(label("Introduction to Artificial Intelligence", "pageTitle"))
+        layout.setContentsMargins(56, 48, 56, 48)
+        layout.setSpacing(12)
+        layout.addWidget(label("FINAL PROJECT  /  GROUP 9", "introEyebrow"))
         layout.addWidget(
-            label("Tổng quan các bài toán và phương pháp trong dự án.", "muted")
+            label("Introduction to\nArtificial Intelligence", "introTitle")
         )
-        layout.addSpacing(12)
+        layout.addWidget(
+            label("503043  -  Semester 1, Academic Year 2026–2027", "introDetails")
+        )
+        layout.addSpacing(24)
 
-        cards = QHBoxLayout()
-        cards.setSpacing(16)
-        for title, description in (
-            ("01   N-Queens", "SAT Solver và Min-Conflicts"),
-            ("02   Tank Battle", "Pygame - màn hình trò chơi"),
-            (
-                "03   Kakuro CSP",
-                "Backtracking, MRV, Degree, LCV và Forward Checking",
-            ),
-        ):
-            card = QFrame()
-            card.setObjectName("card")
-            card.setFixedHeight(190)
-            card_layout = QVBoxLayout(card)
-            card_layout.setContentsMargins(24, 24, 24, 24)
-            card_layout.setSpacing(12)
-            card_layout.addWidget(label(title, "cardTitle"))
-            card_layout.addWidget(label(description, "muted"))
-            card_layout.addStretch()
-            cards.addWidget(card, 1)
-        layout.addLayout(cards)
+        members = QFrame()
+        members.setObjectName("card")
+        members.setMaximumWidth(700)
+        members_layout = QVBoxLayout(members)
+        members_layout.setContentsMargins(28, 24, 28, 24)
+        members_layout.setSpacing(14)
+        members_layout.addWidget(label("Group 9", "introGroup"))
+        members_layout.addWidget(
+            label("524H0098   -   Nguyễn Hòa Khang", "introMember")
+        )
+        members_layout.addWidget(label("524H0109   -   Lý Gia Luân", "introMember"))
+        members_layout.addWidget(
+            label("524H0101   -   Nguyễn Thái Khoa", "introMember")
+        )
+        layout.addWidget(members)
         layout.addStretch()
         return page
 
@@ -164,23 +161,24 @@ class LauncherWindow(QMainWindow):
         if importlib.util.find_spec("task_2") is None:
             QMessageBox.information(
                 self,
-                "Task 2 chưa sẵn sàng",
-                "Launcher đang chờ entry point `python -m task_2`.",
+                "Task 2 is not available",
+                "The launcher could not find the `task_2` package.",
             )
             return
         if importlib.util.find_spec("pygame") is None:
             QMessageBox.warning(
                 self,
-                "Thiếu Pygame",
-                "Cài dependency bằng lệnh: python -m pip install -r requirements.txt",
+                "Pygame is missing",
+                "Install dependencies with: python -m pip install -r requirements.txt",
             )
             return
         try:
             from task_2.qt_widget import TankBattleWidget
+
             widget = TankBattleWidget()
             widget.start()
         except Exception as exc:
-            QMessageBox.warning(self, "Không thể mở Task 2", str(exc))
+            QMessageBox.warning(self, "Could not open Task 2", str(exc))
             return
         self.task_two = widget
         self.task_two_layout.addWidget(widget, 1)

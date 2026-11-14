@@ -28,7 +28,7 @@ class SolverTests(unittest.TestCase):
             match = re.search(r"const grid = (\[.*?\]);", text, re.S)
             self.assertIsNotNone(match)
             if match is None:
-                self.fail(f"Không tìm thấy grid trong {filename}")
+                self.fail(f"Could not find grid in {filename}")
             raw = match.group(1)
             raw = re.sub(r"(\w+)\s*:", r'"\1":', raw)
             raw = re.sub(r",\s*([}\]])", r"\1", raw)
@@ -54,7 +54,7 @@ class SolverTests(unittest.TestCase):
                 solution = solver.solve()
                 self.assertIsNotNone(solution)
                 if solution is None:
-                    self.fail(f"Không tìm được lời giải cho {board.name}")
+                    self.fail(f"Could not find a solution for {board.name}")
                 self.assertEqual(set(solution), set(board.variables))
                 self.assertTrue(
                     all(

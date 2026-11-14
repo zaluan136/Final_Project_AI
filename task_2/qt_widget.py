@@ -3,7 +3,7 @@ from typing import cast
 
 import pygame
 from PySide6.QtCore import QRectF, QTimer, Qt
-from PySide6.QtGui import QImage, QPainter
+from PySide6.QtGui import QImage, QPainter, QPalette
 from PySide6.QtWidgets import QApplication, QWidget
 
 from .play import Playground
@@ -92,7 +92,7 @@ class TankBattleWidget(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        painter.fillRect(self.rect(), Qt.GlobalColor.black)
+        painter.fillRect(self.rect(), self.palette().color(QPalette.ColorRole.Window))
         if self.frame is not None:
             painter.drawImage(self.target_rect(), self.frame, QRectF(self.frame.rect()))
 

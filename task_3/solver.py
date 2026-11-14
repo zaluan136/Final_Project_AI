@@ -91,7 +91,9 @@ class KakuroSolver:
                     f"Runs: {labels}.",
                 )
             if not self.domains[other]:
-                yield self.event("failure", other, "Domain is empty; this branch fails.")
+                yield self.event(
+                    "failure", other, "Domain is empty; this branch fails."
+                )
                 return False
         return True
 
@@ -142,7 +144,9 @@ class KakuroSolver:
             for run in self.csp.board.runs
         ):
             yield self.event(
-                "failure", None, "An empty domain or impossible clue prevents a solution."
+                "failure",
+                None,
+                "An empty domain or impossible clue prevents a solution.",
             )
             solved = False
         else:

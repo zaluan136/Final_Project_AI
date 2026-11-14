@@ -86,6 +86,26 @@ QLabel#section {
 QLabel#muted {
   color: #697583;
 }
+QLabel#introEyebrow {
+  color: #52769d;
+  font-size: 14px;
+  font-weight: bold;
+}
+QLabel#introTitle {
+  font-size: 38px;
+  font-weight: bold;
+}
+QLabel#introDetails {
+  color: #697583;
+  font-size: 17px;
+}
+QLabel#introGroup {
+  font-size: 22px;
+  font-weight: bold;
+}
+QLabel#introMember {
+  font-size: 17px;
+}
 QLineEdit,
 QSpinBox,
 QDoubleSpinBox,

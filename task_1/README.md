@@ -1,4 +1,4 @@
-# Task 1 — N-Queens
+# Task 1 - N-Queens
 
 Ứng dụng giải bài toán N-Queens bằng SAT hoặc Min-Conflicts và hiển thị lời giải trên bàn cờ. Bàn cờ được vẽ bằng PySide6; quân hậu dùng SVG.
 

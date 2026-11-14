@@ -1,5 +1,3 @@
-"""Run from the project root: python -m unittest task_2.test_contests."""
-
 import unittest
 from collections import Counter
 

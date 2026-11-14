@@ -1,241 +1,76 @@
 \documentclass[conference]{IEEEtran}
-
-\usepackage{cite}
-\usepackage{amsmath,amssymb,amsfonts}
-\usepackage{url}
-\usepackage{algorithmic}
-\usepackage{graphicx}
-\usepackage{textcomp}
-\usepackage{xcolor}
-
+\usepackage{cite,amsmath,amssymb,url}
 \begin{document}
-
-\title{[Project Title]}
-
-\author{
-    \IEEEauthorblockN{1\textsuperscript{st} Nguyen Hoa Khang}
-    \IEEEauthorblockA{524H0098\\
-        {524H0098@student.tdtu.edu.vn}}
+\title{Artificial Intelligence Methods for N-Queens, Tank Battle, and Kakuro}
+\author{\IEEEauthorblockN{Nguyen Hoa Khang}
+    \IEEEauthorblockA{524H0098\\Ton Duc Thang University}
     \and
-    \IEEEauthorblockN{2\textsuperscript{nd} Ly Gia Luan}
-    \IEEEauthorblockA{524H0101\\
-        {524H0101@student.tdtu.edu.vn}}
+    \IEEEauthorblockN{Ly Gia Luan}
+    \IEEEauthorblockA{524H0109\\Ton Duc Thang University}
     \and
-    \IEEEauthorblockN{3\textsuperscript{rd} Nguyen Thai Khoa}
-    \IEEEauthorblockA{524H0109\\
-        {524H0109@student.tdtu.edu.vn}}
+    \IEEEauthorblockN{Nguyen Thai Khoa}
+    \IEEEauthorblockA{524H0101\\Ton Duc Thang University}
     \and
-    \IEEEauthorblockN{4\textsuperscript{th} MSc. Nguyen Thanh An}
-    \IEEEauthorblockA{\textit{Faculty of Information Technology, Ton Duc Thang University}\\
-        {nguyenthanhan@tdtu.edu.vn}}
-}
+    \IEEEauthorblockN{Nguyen Thanh An}
+    \IEEEauthorblockA{Faculty of Information Technology\\Ton Duc Thang University\\nguyenthanhan@tdtu.edu.vn}}
 \maketitle
-
 \begin{abstract}
-    [State the project requirements and the three problems. Summarize the
-        approaches used, the measured experimental results, and the completion level
-        of each task. Use verified results and include no citations in the abstract.]
+    This project applies satisfiability and local search to N-Queens, adversarial search to a turn-based tank game, and constraint satisfaction to Kakuro. Glucose3 and Min-Conflicts found solutions for all tested N-Queens instances. The tank benchmark compares four search configurations on identical scenarios; terminal search timed out on the longer scenario under a 150 ms decision budget. The Kakuro solver found valid solutions for both supplied boards. The application includes graphical interfaces and an external tank-agent interface. These results demonstrate the implemented requirements within the tested scenarios; independent bot integration and the specified macOS environment remain unverified.
 \end{abstract}
-
-\begin{IEEEkeywords}
-    [N-Queens], [adversarial search], [Kakuro], [constraint satisfaction]
-\end{IEEEkeywords}
-
+\begin{IEEEkeywords}N-Queens, SAT, adversarial search, Kakuro, constraint satisfaction\end{IEEEkeywords}
 \section{Introduction}
- [Introduce the project objectives, the three tasks, and the scope of this
-  report. Briefly explain how the experimental results are evaluated.]
+We study three AI problems using distinct state representations and search methods. The application combines the tasks in a desktop launcher. Experiments below were run on the available Windows environment, not the specified Intel macOS evaluation machine. Times are observations for this machine, not portable guarantees. The individual task results are discussed with their limitations.
+\section{N-Queens with Satisfiability and Local Search}
+\subsection{Model and Methods}
+Let Boolean variable \(Q_{r,c}\) indicate a queen at row \(r\), column \(c\), with integer identifier \(rN+c+1\). Each row has an at-least-one clause. At-most-one constraints for each row, column, and diagonal rule out attacking pairs. For pairwise encoding, each pair \(i,j\) in a group produces \((\neg Q_i\lor\neg Q_j)\). One queen in each row and at most one per column imply exactly \(N\) queens. The encoder constructs groups by scanning rows, columns, and diagonals, then uses PySAT cardinality encodings. Pairwise, sequential counter, and ladder encodings are available; the latter two introduce auxiliary variables. Optional mirror symmetry breaking retains at least one solution but does not preserve all solutions for enumeration. Glucose3 solves the conjunctive normal form (CNF) formula and the decoded board is checked~\cite{pysat}.
 
-\section{N-Queens with SAT and Local Search}
-\subsection{Problem and Approach}
-The N-Queens problem requires placing \(N\) queens on an \(N\times N\) chessboard so that no two queens attack each other. We implemented two approaches: a propositional-logic model solved using Glucose3 in PySAT~\cite{pysat}, and Min-Conflicts local search~\cite{minton}. We used the same solution verifier for both approaches.
-
-\subsubsection{Propositional variables and CNF constraints}
-Each square \((r,c)\) is represented by a Boolean variable \(Q_{r,c}\): true means it contains a queen. The \(N^2\) primary variables are mapped to PySAT integer identifiers by
-\begin{equation}
-    \operatorname{ID}(r,c)=rN+c+1,\quad 0\leq r,c<N.
-    \label{eq:queenvar}
-\end{equation}
-We require at least one queen in each row,
-\(\bigvee_{c=0}^{N-1}Q_{r,c}\), and at most one queen in every row, column, and diagonal. For two distinct squares \(i,j\) belonging to the same group, the Pairwise at-most-one clause is \((\neg Q_i\lor\neg Q_j)\). The combination of exactly one queen per row and at most one per column gives exactly \(N\) queens in distinct columns.
-
-To discover the conflicting squares, the implementation visits every board cell once and adds it to four groups: row \(r\), column \(c\), main diagonal \(r-c+N-1\), and anti-diagonal \(r+c\). It then generates the row at-least-one clauses and encodes each at-most-one group with PySAT's \texttt{CardEnc.atmost}. We implemented three encodings: Pairwise (binary clauses with no auxiliary variables), Sequential Counter, and Ladder (both using auxiliary variables). For Pairwise encoding without symmetry breaking, counting the row, column, and diagonal pairs gives
-\begin{equation}
-    C(N)=N+N^2(N-1)+\frac{N(N-1)(2N-1)}{3}.
-    \label{eq:queencount}
-\end{equation}
-Thus, its CNF clause count grows as \(O(N^3)\). The optional symmetry-breaking clause restricts the first-row queen to the left half of the board, including the center when \(N\) is odd. This keeps a solution if one exists, but does not preserve all solutions for enumeration.
-
-\subsubsection{Glucose3 solving}
-After building the CNF, Glucose3 checks whether it is satisfiable. For a satisfying model, positive literals corresponding to board squares are decoded into queen positions, which are then validated using \texttt{verify\_solution()}. We measure CNF construction, solver initialization, and solving separately, because the smallest CNF does not necessarily give the shortest runtime.
-
-\subsubsection{Min-Conflicts and the proposed heuristic}
-In local search, the state \(S=[r_0,\ldots,r_{N-1}]\) stores the row \(r_c\) of the queen in column \(c\). Therefore, one queen is always maintained in each column. We maintain row counts \(R\) and diagonal counts \(D_1,D_2\) and compute the current conflicts of a queen as
-\begin{equation}
-    f(r,c)=R[r]+D_1[r-c+N-1]+D_2[r+c]-3.
-    \label{eq:queenconflicts}
-\end{equation}
-The subtraction removes the queen's own contribution. After choosing a queen, both strategies move it within its column to a row with the smallest resulting conflict count (randomly breaking ties). Standard Min-Conflicts randomly chooses any conflicted queen. Our \emph{Most-Conflicted} heuristic instead chooses randomly among the queens with the highest conflict count:
-\(\,c^*\in\arg\max_{c:f(r_c,c)>0}f(r_c,c)\).
-We wanted to test whether fixing the most-conflicted queen first would reduce the search effort; this is a heuristic, not a guaranteed improvement. The code allows \(\max(500,30N)\) steps per attempt and up to 15 random restarts. Failure within this budget does not prove unsatisfiability.
-
-\subsection{Experimental Results and Discussion}
-We ran the benchmark in the application's Benchmark tab with \textbf{five trials per configuration}, using \(N=4,8,12,16\) for both algorithm families. The Pairwise clause counts match the encoding without symmetry breaking. The mean solving time measures only Glucose3's search, whereas the mean total time includes CNF construction and initialization. All 12 SAT configurations found a solution in 5/5 trials. Table~\ref{tab:queen_sat} reports the displayed means and CNF sizes.
-
-\begin{table}[htbp]
-    \caption{Glucose3 Results (5 Trials; Times in ms)}
-    \label{tab:queen_sat}
-    \centering\scriptsize
-    \setlength{\tabcolsep}{3pt}
-    \begin{tabular}{r l r r r r}
-        \hline
-        \(N\) & Encoding   & Vars & Clauses & Solve & Total \\
-        \hline
-        4     & Pairwise   & 16   & 80      & 0.006 & 0.144 \\
-        4     & SeqCounter & 54   & 108     & 0.004 & 0.124 \\
-        4     & Ladder     & 82   & 216     & 0.008 & 0.193 \\
-        8     & Pairwise   & 64   & 736     & 0.047 & 0.695 \\
-        8     & SeqCounter & 270  & 592     & 0.059 & 0.594 \\
-        8     & Ladder     & 346  & 988     & 0.031 & 0.638 \\
-        12    & Pairwise   & 144  & 2608    & 0.064 & 1.347 \\
-        12    & SeqCounter & 646  & 1460    & 1.263 & 2.272 \\
-        12    & Ladder     & 770  & 2272    & 1.109 & 2.495 \\
-        16    & Pairwise   & 256  & 6336    & 0.964 & 5.358 \\
-        16    & SeqCounter & 1182 & 2712    & 4.562 & 6.292 \\
-        16    & Ladder     & 1354 & 4068    & 3.376 & 5.449 \\
-        \hline
-    \end{tabular}
-\end{table}
-
-For \(N=16\), Sequential Counter uses 2712 clauses versus Pairwise's 6336, but its mean solve time is 4.562~ms versus 0.964~ms. This shows that a smaller clause count does not necessarily mean faster SAT solving. Conversely, for \(N=8\), Sequential Counter has a lower mean total time than Pairwise (0.594 versus 0.695~ms). The best choice depends on the metric and test size.
-
-The local-search benchmark uses the same four board sizes and five trials for each strategy. Table~\ref{tab:queen_local} shows the means displayed in the application; all eight configurations were successful in 5/5 runs.
-\begin{table}[htbp]
-    \caption{Min-Conflicts Results (5 Trials; Times in ms)}
-    \label{tab:queen_local}
-    \centering\scriptsize
-    \setlength{\tabcolsep}{4pt}
-    \begin{tabular}{r l r r}
-        \hline
-        \(N\) & Strategy        & Success & Mean total \\
-        \hline
-        4     & Standard        & 5/5     & 0.029      \\
-        4     & Most-Conflicted & 5/5     & 0.032      \\
-        8     & Standard        & 5/5     & 0.328      \\
-        8     & Most-Conflicted & 5/5     & 0.183      \\
-        12    & Standard        & 5/5     & 0.184      \\
-        12    & Most-Conflicted & 5/5     & 0.221      \\
-        16    & Standard        & 5/5     & 0.445      \\
-        16    & Most-Conflicted & 5/5     & 0.235      \\
-        \hline
-    \end{tabular}
-\end{table}
-
-Most-Conflicted had a lower mean time at \(N=8\) and \(N=16\), but Standard was faster at \(N=4\) and \(N=12\). Therefore, the five-trial results do not establish that our heuristic is consistently faster. These short runtimes can also be affected by measurement noise; additional trials and larger boards would make the comparison more reliable. The application also supports CSV export, which we can use for further analysis of steps and median runtimes. Overall, the two methods produced valid placements, while their performance depended on encoding or variable-selection choices.
-
+Min-Conflicts stores one queen per column and repeatedly moves a conflicted queen to a minimum-conflict row, breaking ties randomly~\cite{minton}. The standard strategy selects a random conflicted queen; the proposed most-conflicted strategy selects randomly among those with the greatest number of conflicts. Search uses bounded steps and restarts; failure within this budget does not prove unsatisfiability.
+\subsection{Experiments}
+Table~\ref{sat} shows five runs per size using pairwise encoding without symmetry. Solve time excludes CNF construction and solver initialization. All runs returned verified solutions.
+\begin{table}[htbp]\caption{Glucose3 results, five runs per size}\label{sat}\centering
+    \begin{tabular}{rrrr}\hline \(N\) & Clauses & Success & Mean solve (ms) \\\hline
+                   4                & 80      & 5/5     & 0.0073          \\8 & 736 & 5/5 & 0.0334\\12 & 2608 & 5/5 & 0.0700\\16 & 6336 & 5/5 & 1.1256\\\hline\end{tabular}\end{table}
+Table~\ref{local} compares the two local-search strategies using the same five seeds per size. Mean steps include all attempts; all runs succeeded. The proposed choice improved mean steps for three of four sizes, but this small sample does not establish a general advantage.
+\begin{table}[htbp]\caption{Min-Conflicts: mean steps over five runs}\label{local}\centering
+    \begin{tabular}{rrr}\hline \(N\) & Standard & Most-conflicted \\\hline
+                   4               & 10.8     & 9.4             \\8 & 140.4 & 66.2\\12 & 63.4 & 71.8\\16 & 118.8 & 64.8\\\hline\end{tabular}\end{table}
 \section{Adversarial Search for Tank Battle}
-\subsection{Problem and Approach}
-[Describe the game state, available actions, evaluation, and implemented
-    search methods, including Minimax and Alpha-Beta where applicable. Explain
-    assumptions and limitations relevant to the implementation.]
+\subsection{Game and Search}
+A game state contains the board, tanks, bases, walls, bullets, and turn count. Two teams form a zero-sum game: winning, losing and drawing have positive, negative and zero terminal utility respectively. Each tank can move in four directions, fire, or stay. Tanks, bases and walls start with 6, 9 and 3 health points, respectively; a hit causes one damage. Bullets advance up to three cells per cycle, checking each cell, and stop on impact. Destruction of a team's tank or base causes defeat; simultaneous destruction can produce a draw. A turn limit and tie resolution are implementation-specific extensions.
 
-\subsection{Experimental Results}
-[State the scenarios, configurations, measurement method, and observed
-    results. Use comparable settings and identify any approximations.]
-
-\begin{table}[htbp]
-    \caption{Tank Battle Experimental Results}
-    \label{tab:tank}
-    \centering
-    \begin{tabular}{lcc}
-        \hline
-        Method   & [Metric 1] & [Metric 2] \\
-        \hline
-        [Method] & [Value]    & [Value]    \\
-        \hline
-    \end{tabular}
-\end{table}
-
+The match collects actions and resolves contested destinations, including random selection when applicable. Search models a controlled tank as MAX and opponents as MIN. Minimax searches terminal outcomes, while depth-limited heuristic Minimax evaluates nonterminal states using factors including health, position and threats. Alpha-Beta pruning reduces explored branches; random contest outcomes are evaluated by expectation. Other tanks' actions are approximated by a simple policy, so the multi-tank search is not an exact solution of the full simultaneous-action game. Deadlines can trigger fallback actions. A Pygame interface supports play and a Python agent interface enables importing other implementations.
+\subsection{Experiments}
+The terminal suite has two one-turn scenarios, repeated three times each; the budget suite repeats one longer scenario three times with a 150 ms decision budget and maximum heuristic depth 3. All four methods use the same scenarios within each suite. Table~\ref{tank} shows mean time and search counter values for the terminal suite. The counter measures search checks, not unique states.
+\begin{table}[htbp]\caption{Tank terminal suite, six samples per method}\label{tank}\centering
+    \begin{tabular}{lrr}\hline Method & Mean ms & Mean nodes \\\hline
+                   Minimax            & 7.91    & 52.5       \\Alpha-Beta & 2.35 & 18.0\\Heuristic Minimax & 7.93 & 52.5\\Heuristic + Alpha-Beta & 2.57 & 18.0\\\hline\end{tabular}\end{table}
+In the budget suite all configurations reached the deadline in 3/3 samples. Minimax and Alpha-Beta completed no search depth and fell back in 3/3 samples; the heuristic versions completed mean depths 1 and 2, respectively, without fallback. These short scenarios do not measure win rate. An independent group's agent has not yet been tested.
 \section{Kakuro as a Constraint Satisfaction Problem}
-\subsection{Problem and Approach}
-[Define variables, domains, and constraints. Explain Backtracking and the
-    roles of Forward Checking, MRV, Degree, and LCV as implemented. Cite sources.]
+\subsection{Model and Solver}
+Each white cell is a variable with initial domain \(\{1,\ldots,9\}\). Every horizontal and vertical run has a clue: its cells must sum to that clue and contain distinct values~\cite{kakuro}. The solver uses depth-first backtracking with forward checking. Minimum remaining values selects a cell with the smallest domain; degree breaks ties by preferring more unassigned neighbors. Least constraining value orders candidates by their effect on neighboring domains. Forward checking removes inconsistent candidates from neighbors after an assignment; an empty domain causes backtracking and restoration. The run consistency test uses bounds, so surviving a partial check does not itself prove a completion exists. The completed assignment is checked against all sums and distinctness constraints. The solver does not implement AC-3 and stops at the first solution, without proving uniqueness.
 
-\subsection{Experimental Results}
-[Identify the board, verification method, measured results, and limitations.
-    Do not claim that the implementation uses AC-3 or proves uniqueness unless
-    those claims are supported by the implementation and experiment.]
-
-\begin{table}[htbp]
-    \caption{Kakuro Experimental Results}
-    \label{tab:kakuro}
-    \centering
-    \begin{tabular}{lcc}
-        \hline
-        Board   & [Metric] & Result   \\
-        \hline
-        [Board] & [Value]  & [Result] \\
-        \hline
-    \end{tabular}
-\end{table}
-
-% Optional figure example. Put the image in docs/figures/, cite it in the text,
-% and uncomment this block. The path below assumes compilation from the root.
-% \begin{figure}[htbp]
-% \centering
-% \includegraphics[width=\columnwidth]{docs/figures/example.png}
-% \caption{[Describe what the figure demonstrates.]}
-% \label{fig:example}
-% \end{figure}
-
+A PySide6 interface shows domains, selections, candidate removals and backtracking events. The supplied demo and assignment boards are represented in Python; the HTML copies are visual references rather than runtime parsers.
+\subsection{Experiments}
+Table~\ref{kakuroresults} reports one run per board, measured by the solver excluding animation delays. The solutions passed the constraint satisfaction problem (CSP) solution check. Branches count attempted assignments; backtracks count restored assignments. One run per board demonstrates functionality but is not a statistical performance comparison.
+\begin{table}[htbp]\caption{Kakuro solver results}\label{kakuroresults}\centering
+    \begin{tabular}{lrrrr}\hline Board & Cells & Branches & Backtracks & Time (ms) \\\hline
+                   Demo \(5\times5\)     & 12    & 12       & 0          & 6.01      \\Task \(9\times9\) & 48 & 121 & 73 & 67.00\\\hline\end{tabular}\end{table}
 \section{Contributions}
- [Describe each member's individual work and completion level. Add one row per
-  member; percentages must reflect the group's actual assessment.]
-
-\begin{table}[htbp]
-    \caption{Individual Contributions}
-    \label{tab:contributions}
-    \centering
-    \begin{tabular}{p{0.26\columnwidth}p{0.44\columnwidth}c}
-        \hline
-        Member             & Individual work        & Completion \\
-        \hline
-        {Nguyen Hoa Khang} & Task 3 and ... [so on] & 100\%      \\
-        {Ly Gia Luan}      & Task 1 and ... [so on] & 100\%      \\
-        {Nguyen Thai Khoa} & Task 2 and ... [so on] & 100\%      \\
-        \hline
-    \end{tabular}
-\end{table}
-
+Nguyen Hoa Khang completed Task 3, Ly Gia Luan completed Task 1, and Nguyen Thai Khoa completed Task 2. Each member reported 100\% completion of their assigned task. Shared integration and report work are not attributed here because the individual division has not been specified.
 \section{Self-Evaluation}
- [Evaluate each task against the assignment requirements. Record completion,
-  missing work, and the estimated score using the assignment's actual rubric.]
-
-\begin{table}[htbp]
-    \caption{Task Completion and Estimated Scores}
-    \label{tab:evaluation}
-    \centering
-    \begin{tabular}{lccc}
-        \hline
-        Task               & Completion & Score   & Maximum \\
-        \hline
-        Task 1             & [\%]       & [Score] & [Max]   \\
-        Task 2             & [\%]       & [Score] & [Max]   \\
-        Task 3             & 90\%       & 9       & 9       \\
-        Report / interview & [\%]       & [Score] & [Max]   \\
-        \hline
-    \end{tabular}
-\end{table}
-
+All three tasks have working implementations and tested examples. Task 1 implements both requested solvers and their comparison. Task 2 implements the game, four search configurations, experiments, and an external agent interface; interoperability with another group's agent remains to be verified. Task 3 solves and visualizes both boards, but neither uniqueness nor heuristic improvement has been established. Testing on Intel macOS Ventura and the final interview remain outstanding. Table~\ref{selfeval} gives a provisional group estimate, not an awarded grade; the final mark depends on the lecturer and interview.
+\begin{table}[htbp]\caption{Provisional self-evaluation}\label{selfeval}\centering
+    \begin{tabular}{lcc}\hline Component & Estimate & Maximum \\\hline
+                   Task 1 - N-Queens     & 2.8      & 3.0     \\
+                   Task 2 - Tank Battle  & 2.6      & 3.0     \\
+                   Task 3 - Kakuro       & 2.8      & 3.0     \\
+                   Report and interview  & 0.7      & 1.0     \\\hline
+                   Total                 & 8.9      & 10.0    \\\hline\end{tabular}\end{table}
 \section{Conclusion}
- [Summarize the project requirements, approaches, measured results, and
-  completion levels. State important limitations and possible future work.]
-
-% Replace the example with sources actually used, formatted in IEEE style.
-% Cite every source used by the remaining tasks.
+SAT and local search produced valid N-Queens solutions, adversarial search controlled the tank game under bounded computation, and constraint propagation with backtracking solved both Kakuro boards. The implementations cover the principal requirements, with the limitations reflected in the provisional scores above. The benchmark results are specific to the measured setup and small samples. Future validation should include larger experimental samples, another group's tank agent, and the required macOS configuration.
 \begin{thebibliography}{00}
-    \bibitem{pysat} A. Ignatiev, A. Morgado, and J. Marques-Silva, ``PySAT: A Python Toolkit for Prototyping with SAT Oracles,'' in \emph{Theory and Applications of Satisfiability Testing -- SAT 2018}, 2018, pp. 428--437.
+    \bibitem{pysat} A. Ignatiev, A. Morgado, and J. Marques-Silva, ``PySAT: A Python toolkit for prototyping with SAT oracles,'' in \emph{SAT 2018}, 2018, pp. 428--437.
     \bibitem{minton} S. Minton, M. D. Johnston, A. B. Philips, and P. Laird, ``Minimizing conflicts: A heuristic repair method for constraint satisfaction and scheduling problems,'' \emph{Artificial Intelligence}, vol. 58, no. 1--3, pp. 161--205, 1992.
-    % Add references used by Task 2 and Task 3 here.
+    \bibitem{kakuro} Wikipedia contributors, ``Kakuro,'' \emph{Wikipedia}. [Online]. Available: \url{https://en.wikipedia.org/wiki/Kakuro}.
 \end{thebibliography}
-
 \end{document}

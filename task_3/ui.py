@@ -6,7 +6,9 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPlainTextEdit,
+    QProgressBar,
     QPushButton,
+    QSlider,
     QSplitter,
     QVBoxLayout,
     QWidget,
@@ -33,9 +35,16 @@ class BoardView(QWidget):
     def board_geometry(self):
         if self.board is None:
             return 0.0, 0.0, 0.0
-        size = min((self.width() - 2) / self.board.width,
-                   (self.height() - 2) / self.board.height, 120.0)
-        return size, (self.width() - size * self.board.width) / 2, (self.height() - size * self.board.height) / 2
+        size = min(
+            (self.width() - 2) / self.board.width,
+            (self.height() - 2) / self.board.height,
+            120.0,
+        )
+        return (
+            size,
+            (self.width() - size * self.board.width) / 2,
+            (self.height() - size * self.board.height) / 2,
+        )
 
     def paintEvent(self, paint_event):
         if self.board is None:
@@ -63,7 +72,9 @@ class BoardView(QWidget):
                 painter.drawRect(rect)
                 if cell.kind != "cell":
                     painter.drawLine(rect.topLeft(), rect.bottomRight())
-                    painter.setFont(QFont("Arial", max(8, int(size * 0.18)), QFont.Weight.Bold))
+                    painter.setFont(
+                        QFont("Arial", max(8, int(size * 0.18)), QFont.Weight.Bold)
+                    )
                     if cell.across is not None:
                         painter.drawText(
                             rect.adjusted(size / 2, 5, -6, -size / 2),
@@ -79,7 +90,9 @@ class BoardView(QWidget):
                     continue
                 assignment = self.current_event.assignment if self.current_event else {}
                 if position in assignment:
-                    painter.setFont(QFont("Arial", max(10, int(size * 0.35)), QFont.Weight.Bold))
+                    painter.setFont(
+                        QFont("Arial", max(10, int(size * 0.35)), QFont.Weight.Bold)
+                    )
                     painter.drawText(
                         rect, Qt.AlignmentFlag.AlignCenter, str(assignment[position])
                     )
@@ -128,17 +141,37 @@ class KakuroWidget(QWidget):
         set_button_icon(self.pause_button, "pause")
         set_button_icon(self.step_button, "next")
         set_button_icon(self.reset_button, "reset")
-        self.speed = QComboBox()
-        for label, interval in (("0.5×", 400), ("1×", 200), ("2×", 100), ("4×", 50)):
-            self.speed.addItem(label, interval)
-        self.speed.setCurrentIndex(1)
+        self.speed_options = (
+            ("0.25×", 1600),
+            ("0.5×", 800),
+            ("1×", 400),
+            ("2×", 200),
+            ("4×", 100),
+        )
+        self.speed = QSlider(Qt.Orientation.Horizontal)
+        self.speed.setRange(0, len(self.speed_options) - 1)
+        self.speed.setSingleStep(1)
+        self.speed.setPageStep(1)
+        self.speed.setTickPosition(QSlider.TickPosition.TicksBelow)
+        self.speed.setTickInterval(1)
+        self.speed.setValue(2)
+        self.speed_label = QLabel()
         self.board_view = BoardView()
         self.status = QLabel()
         self.status.setWordWrap(True)
+        status_font = self.status.font()
+        status_font.setBold(True)
+        self.status.setFont(status_font)
+        self.explanation = QLabel()
+        self.explanation.setWordWrap(True)
         self.run_details = QLabel()
         self.run_details.setWordWrap(True)
         self.statistics_label = QLabel()
         self.statistics_label.setWordWrap(True)
+        self.progress_label = QLabel()
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setTextVisible(False)
+        self.progress_bar.setFixedHeight(8)
         self.log = QPlainTextEdit()
         self.log.setReadOnly(True)
         self.log.setMaximumBlockCount(1200)
@@ -147,7 +180,7 @@ class KakuroWidget(QWidget):
         inspector.setMinimumWidth(300)
         sidebar = QVBoxLayout(inspector)
         sidebar.setContentsMargins(20, 20, 20, 20)
-        sidebar.setSpacing(12)
+        sidebar.setSpacing(8)
         method = QLabel("Controls")
         method.setObjectName("section")
         sidebar.addWidget(method)
@@ -161,16 +194,22 @@ class KakuroWidget(QWidget):
         actions2.addWidget(self.step_button)
         actions2.addWidget(self.reset_button)
         sidebar.addLayout(actions2)
-        sidebar.addWidget(QLabel("Speed"))
+        sidebar.addWidget(self.speed_label)
         sidebar.addWidget(self.speed)
-        sidebar.addSpacing(8)
-        activity = QLabel("Progress")
+        sidebar.addSpacing(6)
+        activity = QLabel("Current step")
         activity.setObjectName("section")
         sidebar.addWidget(activity)
         self.status.setObjectName("status")
         sidebar.addWidget(self.status)
+        sidebar.addWidget(self.explanation)
         sidebar.addWidget(self.run_details)
+        sidebar.addWidget(self.progress_label)
+        sidebar.addWidget(self.progress_bar)
         sidebar.addWidget(self.statistics_label)
+        log_title = QLabel("Search history")
+        log_title.setObjectName("section")
+        sidebar.addWidget(log_title)
         sidebar.addWidget(self.log, 1)
         self.splitter = QSplitter(Qt.Orientation.Horizontal)
         self.splitter.setChildrenCollapsible(False)
@@ -202,11 +241,13 @@ class KakuroWidget(QWidget):
         self.step_button.clicked.connect(self.step)
         self.reset_button.clicked.connect(self.reset)
         self.board_picker.currentIndexChanged.connect(self.reset)
-        self.speed.currentIndexChanged.connect(self.update_speed)
+        self.speed.valueChanged.connect(self.update_speed)
         self.reset()
 
     def update_speed(self):
-        self.timer.setInterval(int(self.speed.currentData()))
+        label, interval = self.speed_options[self.speed.value()]
+        self.speed_label.setText(f"Speed: {label}")
+        self.timer.setInterval(interval)
 
     def closeEvent(self, event):
         self.timer.stop()
@@ -220,13 +261,18 @@ class KakuroWidget(QWidget):
         self.solver = KakuroSolver(board)
         self.iterator = self.solver.events()
         self.finished = False
+        self.previous_event = None
         self.board_view.set_board(board)
-        self.status.setText("Ready. Select Run or Step to begin.")
-        self.run_details.setText(
-            f"{len(board.variables)} variables · {len(board.runs)} run constraints"
+        self.status.setText("Ready to solve")
+        self.explanation.setText(
+            "Press Run to start solving or Step to advance one event."
         )
+        self.progress_label.setText(f"Filled cells: 0 / {len(board.variables)}")
+        self.progress_bar.setRange(0, len(board.variables))
+        self.progress_bar.setValue(0)
+        self.run_details.clear()
         self.statistics_label.setText(
-            "Solver time: 0 s\nBranches: 0 · Backtracks: 0 · Pruned: 0"
+            "Tried: 0  |  Backtracked: 0  |  Removed: 0\nSolver time: 0.0000 s"
         )
         self.log.clear()
         self.update_speed()
@@ -261,10 +307,10 @@ class KakuroWidget(QWidget):
             return
         self.board_view.current_event = event
         self.board_view.update()
-        prefix = ""
+        cell_name = ""
         if event.cell is not None:
             r, c = event.cell
-            prefix = f"R{r + 1}C{c + 1}: "
+            cell_name = f"R{r + 1}C{c + 1}"
             runs = self.solver.csp.board.cell_runs[event.cell]
             details = []
             for run in runs:
@@ -273,26 +319,55 @@ class KakuroWidget(QWidget):
                     for cell in run.cells
                     if cell in event.assignment
                 ]
-                details.append(f"{run.label} · assigned sum: {sum(values)}/{run.total}")
-            self.run_details.setText("\n".join(details))
-        self.status.setText(prefix + event.message)
-        labels = {
-            "start": "START",
-            "select": "SELECT",
-            "try": "TRY",
-            "prune": "PRUNE",
-            "failure": "FAILURE",
-            "restore": "BACKTRACK",
-            "complete": "COMPLETE",
-        }
+                details.append(
+                    f"{run.direction.title()}: {sum(values)} / {run.total} assigned"
+                )
+            self.run_details.setText(f"Active cell: {cell_name}\n" + "\n".join(details))
+        else:
+            self.run_details.clear()
         depth = len(event.assignment)
-        self.log.appendPlainText(
-            f"[{labels[event.kind]}] {prefix}{depth} assigned\n{event.message}\n"
+        self.progress_label.setText(
+            f"Filled cells: {depth} / {len(self.solver.csp.board.variables)}"
         )
+        self.progress_bar.setValue(depth)
+        if event.kind == "select":
+            title = f"Choose cell {cell_name}"
+            options = event.message.partition("LCV order: ")[2].rstrip(".")
+            detail = f"Candidates: {sorted(event.domains[event.cell])}\nTry in order: {options}"
+            summary = f"Select {cell_name}: {sorted(event.domains[event.cell])}"
+        elif event.kind == "try":
+            value = event.assignment[event.cell]
+            title = f"Try {cell_name} = {value}"
+            detail = "Check how this choice affects neighboring cells."
+            summary = f"Try {cell_name} = {value}"
+        elif event.kind == "prune" and self.previous_event is not None:
+            before = self.previous_event.domains[event.cell]
+            after = event.domains[event.cell]
+            removed = sorted(before - after)
+            title = f"Update candidates for {cell_name}"
+            detail = f"Removed: {removed}\nRemaining: {sorted(after)}"
+            summary = f"Update {cell_name}: {sorted(after)}"
+        elif event.kind == "restore":
+            title = f"Backtrack at {cell_name}"
+            detail = event.message
+            summary = f"Backtrack at {cell_name}"
+        elif event.kind == "failure":
+            title = f"Dead end{f' at {cell_name}' if cell_name else ''}"
+            detail = event.message
+            summary = f"Dead end{f' at {cell_name}' if cell_name else ''}"
+        else:
+            title = "Search complete" if event.kind == "complete" else "Search started"
+            detail = event.message
+            summary = title
+        self.status.setText(title)
+        self.explanation.setText(detail)
+        self.log.appendPlainText(summary)
+        self.log.verticalScrollBar().setValue(self.log.verticalScrollBar().maximum())
+        self.previous_event = event
         statistics = event.statistics
         self.statistics_label.setText(
-            f"Solver time: {statistics.elapsed:.4f} s\n"
-            f"Branches: {statistics.branches} · Backtracks: {statistics.backtracks} · Pruned: {statistics.pruned}"
+            f"Tried: {statistics.branches}  |  Backtracked: {statistics.backtracks}  |  Removed: {statistics.pruned}\n"
+            f"Solver time: {statistics.elapsed:.4f} s"
         )
         if event.kind == "complete":
             self.finished = True

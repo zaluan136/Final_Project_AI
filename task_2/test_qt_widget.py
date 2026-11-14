@@ -27,6 +27,11 @@ class EmbeddedGameTests(unittest.TestCase):
             self.assertEqual(widget.frame.size().width(), 600)
             self.assertEqual(widget.game_pos(QPointF(300, 300)), (600, 410))
             self.assertEqual(widget.game_pos(QPointF(300, 10)), (-1, -1))
+            widget.setStyleSheet("QWidget { background-color: #f4f5f7; }")
+            self.app.processEvents()
+            self.assertEqual(
+                widget.grab().toImage().pixelColor(300, 10).name(), "#f4f5f7"
+            )
             rect = widget.game.field_rects["turns"]
             target = widget.target_rect()
             point = QPoint(

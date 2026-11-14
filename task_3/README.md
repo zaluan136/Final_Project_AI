@@ -1,4 +1,4 @@
-# Task 3 — Kakuro CSP
+# Task 3 - Kakuro CSP
 
 Ứng dụng minh họa quá trình giải Kakuro bằng Backtracking Search kết hợp Forward Checking, MRV, Degree và LCV. Hai bàn chơi lấy cấu trúc và clue từ `boards/kakuro_demo.html` và `boards/kakuro_task.html`.
 
@@ -19,9 +19,9 @@ Giao diện dùng PySide6 Widgets với style mặc định của hệ điều h
 
 - Chọn bàn Demo 5×5 hoặc bàn chính thức 9×9.
 - **Run** phát lần lượt các sự kiện; **Pause** giữ trạng thái; **Step** xử lý một sự kiện.
-- **Speed** chọn tốc độ phát sự kiện từ 0,5× đến 4× (1× tương ứng 200 ms giữa các sự kiện). **Reset** hoặc đổi bàn sẽ bắt đầu một lượt giải mới.
+- **Speed** là thanh trượt theo năm nấc 0,25×, 0,5×, 1×, 2× và 4× (1× tương ứng 400 ms giữa các sự kiện). **Reset** hoặc đổi bàn sẽ bắt đầu một lượt giải mới.
 - Số nhỏ là domain; số lớn là giá trị đã gán. Viền đậm đánh dấu ô đang xét và nền xám nhạt đánh dấu dãy liên quan.
-- Bảng bên phải hiển thị trạng thái, thống kê và log; kéo vạch giữa hai bảng để thay đổi chiều rộng. Log giữ tối đa 1.200 dòng.
+- Bảng bên phải cho biết số ô đã gán, sự kiện hiện tại, tổng đã gán của các dãy liên quan và thống kê. Activity log ghi ngắn gọn từng sự kiện, mới nhất ở cuối; kéo vạch giữa hai bảng để thay đổi chiều rộng. Log giữ tối đa 1.200 dòng.
 
 Ứng dụng minh họa solver, không có chức năng nhập số thủ công.
 

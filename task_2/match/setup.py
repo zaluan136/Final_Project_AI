@@ -1,5 +1,3 @@
-"""Terrain-only map and pre-match placement API; no automatic spawn."""
-
 from dataclasses import replace
 from pathlib import Path
 from task_2.core.state import GameState, Tank, Base, Wall, Direction
@@ -26,7 +24,6 @@ def parse_map(text):
 
 
 def load_map(path):
-    """Load terrain or preset: A/B = bases, a/b = tanks of each team."""
     text = Path(path).read_text(encoding="utf-8-sig")
     rows = text.splitlines()
     if any(c not in ".#ABab" for row in rows for c in row):
@@ -58,7 +55,6 @@ def load_map(path):
 
 
 def export_map(state, name, directory=None, overwrite=False):
-    """Save terrain in the same . / # format accepted by load_map."""
     name = name.strip()
     if name.lower().endswith(".txt"):
         name = name[:-4].strip()

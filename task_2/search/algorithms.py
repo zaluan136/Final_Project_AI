@@ -60,6 +60,9 @@ class Searcher:
         draft=draft or self.rules.begin(state)
         if tank_id not in draft.pending: raise ValueError('Tank is not awaiting an action')
         fallback=predicted_action(self.rules,state,tank_id,draft,memory)
+        idle_costs = ({a: memory.idle_penalty(state,self.rules,a)
+                       for a in self.rules.actions(state,tank_id,draft)}
+                      if memory is not None and self.config.heuristic else {})
 
         def check():
             if cancel_event is not None and cancel_event.is_set(): raise TimeoutError
@@ -85,7 +88,7 @@ class Searcher:
             outcome=self.rules.outcome(s)
             if outcome is not None: return terminal_value(outcome,team),None
             if remaining==0:
-                return evaluate(s,team),None
+                return evaluate(s,team)-idle_costs.get(root_action,0),None
             own=[tank_id] if tank_id in d.pending else []
             enemies=[i for i in d.pending if s.tank(i).team!=team]
             # Nemesis applies only with >=3 live tanks; never hides other entities.
@@ -155,3 +158,5 @@ class Searcher:
             stats.exact_terminal_search=depth is None
         stats.elapsed_seconds=perf_counter()-start
         return result
+
+

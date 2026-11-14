@@ -35,7 +35,7 @@ class UITests(unittest.TestCase):
 
     def test_pause_step_reset_and_board_switch(self):
         widget = self.widget
-        widget.speed.setCurrentIndex(3)
+        widget.speed.setValue(4)
         widget.run_button.click()
         QTest.qWait(120)
         self.assertTrue(widget.timer.isActive())
@@ -82,11 +82,30 @@ class UITests(unittest.TestCase):
         self.widget.close()
         self.assertFalse(self.widget.timer.isActive())
 
+    def test_progress_and_log_describe_solver_events(self):
+        widget = self.widget
+        self.assertEqual(widget.progress_label.text(), "Assigned: 0 / 12 cells")
+        widget.advance()  # start
+        widget.advance()  # select
+        self.assertIn("SELECT  R3C3", widget.log.toPlainText())
+        widget.advance()  # try
+        self.assertEqual(widget.progress_label.text(), "Assigned: 1 / 12 cells")
+        self.assertIn("Try R3C3 = 3", widget.status.text())
+        widget.advance()  # prune
+        self.assertIn("PRUNE  R2C3  ·  remove [1, 2, 3]", widget.log.toPlainText())
+        self.assertIn("Active cell: R2C3", widget.run_details.text())
+        widget.reset()
+        self.assertEqual(widget.progress_label.text(), "Assigned: 0 / 12 cells")
+        self.assertEqual(widget.log.toPlainText(), "")
+
     def test_speed_and_responsive_board(self):
         widget = self.widget
-        for index, interval in enumerate((400, 200, 100, 50)):
-            widget.speed.setCurrentIndex(index)
+        for index, interval in enumerate((1600, 800, 400, 200, 100)):
+            widget.speed.setValue(index)
             self.assertEqual(widget.timer.interval(), interval)
+            self.assertEqual(
+                widget.speed_label.text(), f"Speed: {widget.speed_options[index][0]}"
+            )
         demo_size, x, y = widget.board_view.board_geometry()
         self.assertGreaterEqual(x, 0)
         self.assertGreaterEqual(y, 0)
@@ -100,7 +119,9 @@ class UITests(unittest.TestCase):
         self.assertGreater(widget.splitter.sizes()[1], widget.splitter.sizes()[0])
 
     def test_icons_follow_themed_button_text(self):
-        theme = (Path(__file__).resolve().parents[2] / "ui" / "themes.qss").read_text(encoding="utf-8")
+        theme = (Path(__file__).resolve().parents[2] / "ui" / "themes.qss").read_text(
+            encoding="utf-8"
+        )
         button = QPushButton("Run")
         button.setObjectName("primary")
         button.setStyleSheet(theme)
@@ -108,14 +129,22 @@ class UITests(unittest.TestCase):
         button.show()
         self.app.processEvents()
         image = button.icon().pixmap(48, 48).toImage()
-        colors = {image.pixelColor(x, y).name() for x in range(image.width())
-                  for y in range(image.height()) if image.pixelColor(x, y).alpha() > 200}
+        colors = {
+            image.pixelColor(x, y).name()
+            for x in range(image.width())
+            for y in range(image.height())
+            if image.pixelColor(x, y).alpha() > 200
+        }
         self.assertIn("#ffffff", colors)
         button.setEnabled(False)
         self.app.processEvents()
         disabled = button.icon().pixmap(48, 48, button.icon().Mode.Disabled).toImage()
-        disabled_colors = {disabled.pixelColor(x, y).name() for x in range(disabled.width())
-                           for y in range(disabled.height()) if disabled.pixelColor(x, y).alpha() > 200}
+        disabled_colors = {
+            disabled.pixelColor(x, y).name()
+            for x in range(disabled.width())
+            for y in range(disabled.height())
+            if disabled.pixelColor(x, y).alpha() > 200
+        }
         self.assertIn("#ffffff", disabled_colors)
         button.close()
 
@@ -129,8 +158,12 @@ class UITests(unittest.TestCase):
             nav.setChecked(checked)
             self.app.processEvents()
             image = nav.icon().pixmap(48, 48).toImage()
-            colors = {image.pixelColor(x, y).name() for x in range(image.width())
-                      for y in range(image.height()) if image.pixelColor(x, y).alpha() > 200}
+            colors = {
+                image.pixelColor(x, y).name()
+                for x in range(image.width())
+                for y in range(image.height())
+                if image.pixelColor(x, y).alpha() > 200
+            }
             self.assertIn("#d9e1ea", colors)
         nav.close()
 

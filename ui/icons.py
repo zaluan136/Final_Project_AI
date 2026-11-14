@@ -29,7 +29,12 @@ def icon(name: str, color: str | None = None) -> QIcon:
     renderer.render(painter, QRectF(4, 4, 40, 40))
     painter.end()
     result = QIcon()
-    for mode in (QIcon.Mode.Normal, QIcon.Mode.Disabled, QIcon.Mode.Active, QIcon.Mode.Selected):
+    for mode in (
+        QIcon.Mode.Normal,
+        QIcon.Mode.Disabled,
+        QIcon.Mode.Active,
+        QIcon.Mode.Selected,
+    ):
         result.addPixmap(pixmap, mode)
     return result
 
@@ -55,8 +60,12 @@ class _ButtonIconUpdater(QObject):
             self.button.setIcon(icon(self.name, color))
 
     def eventFilter(self, watched, event):
-        if event.type() in (QEvent.Type.PaletteChange, QEvent.Type.EnabledChange,
-                            QEvent.Type.StyleChange, QEvent.Type.Paint):
+        if event.type() in (
+            QEvent.Type.PaletteChange,
+            QEvent.Type.EnabledChange,
+            QEvent.Type.StyleChange,
+            QEvent.Type.Paint,
+        ):
             self.update_icon()
         return False
 

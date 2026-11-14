@@ -1,0 +1,15 @@
+import sys
+
+from PySide6.QtWidgets import QApplication
+from .app import MainWindow
+
+
+def main() -> int:
+    app = QApplication.instance() or QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    return app.exec()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

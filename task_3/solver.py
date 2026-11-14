@@ -85,12 +85,13 @@ class KakuroSolver:
                 yield self.event(
                     "prune",
                     other,
-                    f"Forward checking sau R{cell[0] + 1}C{cell[1] + 1}={self.assignment[cell]}: "
-                    f"domain {before} → {sorted(self.domains[other])}; loại {sorted(removed)} "
-                    f"vì trùng số hoặc tổng không thể đạt. Dãy: {labels}.",
+                    f"After R{cell[0] + 1}C{cell[1] + 1}={self.assignment[cell]}, "
+                    f"domain {before} → {sorted(self.domains[other])}. "
+                    f"Removed {sorted(removed)}: duplicate or unattainable sum. "
+                    f"Runs: {labels}.",
                 )
             if not self.domains[other]:
-                yield self.event("failure", other, "Domain rỗng; nhánh thất bại.")
+                yield self.event("failure", other, "Domain is empty; this branch fails.")
                 return False
         return True
 
@@ -104,9 +105,8 @@ class KakuroSolver:
         yield self.event(
             "select",
             cell,
-            f"Chọn ô bằng MRV + Degree: domain "
-            f"{sorted(self.domains[cell])}, {degree} ô lân cận chưa gán. "
-            f"Thứ tự thử theo LCV: {values}.",
+            f"MRV + Degree selected domain {sorted(self.domains[cell])} "
+            f"with {degree} unassigned neighbors. LCV order: {values}.",
         )
         for value in values:
             saved = {key: set(domain) for key, domain in self.domains.items()}
@@ -114,7 +114,7 @@ class KakuroSolver:
             self.assignment[cell] = value
             self.domains[cell] = {value}
             yield self.event(
-                "try", cell, f"Gán thử {value}; tiếp theo kiểm tra các ô lân cận."
+                "try", cell, f"Try {value}, then check neighboring domains."
             )
             valid = yield from self.forward_check(cell)
             if valid and (yield from self.backtrack()):
@@ -125,24 +125,24 @@ class KakuroSolver:
             yield self.event(
                 "restore",
                 cell,
-                f"BACKTRACK: nhánh thử {value} thất bại. Bỏ giá trị {value}, "
-                "khôi phục domain của nhánh cha và thử giá trị tiếp theo nếu còn.",
+                f"Value {value} failed. Restore the previous domains "
+                "and try the next value, if available.",
             )
-        yield self.event("failure", cell, "Không còn giá trị hợp lệ cho ô này.")
+        yield self.event("failure", cell, "No valid values remain for this cell.")
         return False
 
     def search(self):
         yield self.event(
             "start",
             None,
-            "Khởi tạo domain 1–9; bắt đầu Backtracking + Forward checking.",
+            "Initialize domains to 1–9; begin backtracking with forward checking.",
         )
         if any(not domain for domain in self.domains.values()) or any(
             not self.csp.run_possible(run, self.assignment, self.domains)
             for run in self.csp.board.runs
         ):
             yield self.event(
-                "failure", None, "Domain rỗng hoặc clue không thể thỏa mãn."
+                "failure", None, "An empty domain or impossible clue prevents a solution."
             )
             solved = False
         else:
@@ -151,7 +151,7 @@ class KakuroSolver:
         yield self.event(
             "complete",
             None,
-            "Đã tìm được lời giải hợp lệ." if solved else "Đề không có lời giải.",
+            "A valid solution was found." if solved else "No solution was found.",
         )
 
     def events(self):

@@ -17,7 +17,7 @@ DEMO = Board(
 
 
 TASK = Board(
-    "Đề chính thức 9×9",
+    "Assignment 9×9",
     [
         [
             BLOCK,

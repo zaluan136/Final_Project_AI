@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import unittest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -9,6 +10,8 @@ from PySide6.QtWidgets import QApplication, QWidget
 
 from task_3 import KakuroWidget
 from task_3.boards import DEMO, TASK
+from ui import set_button_icon
+from PySide6.QtWidgets import QPushButton
 
 
 class UITests(unittest.TestCase):
@@ -32,9 +35,9 @@ class UITests(unittest.TestCase):
 
     def test_pause_step_reset_and_board_switch(self):
         widget = self.widget
-        widget.speed.setValue(100)
+        widget.speed.setCurrentIndex(3)
         widget.run_button.click()
-        QTest.qWait(35)
+        QTest.qWait(120)
         self.assertTrue(widget.timer.isActive())
         widget.pause_button.click()
         event = widget.board_view.current_event
@@ -78,6 +81,58 @@ class UITests(unittest.TestCase):
         self.widget.start()
         self.widget.close()
         self.assertFalse(self.widget.timer.isActive())
+
+    def test_speed_and_responsive_board(self):
+        widget = self.widget
+        for index, interval in enumerate((400, 200, 100, 50)):
+            widget.speed.setCurrentIndex(index)
+            self.assertEqual(widget.timer.interval(), interval)
+        demo_size, x, y = widget.board_view.board_geometry()
+        self.assertGreaterEqual(x, 0)
+        self.assertGreaterEqual(y, 0)
+        widget.board_picker.setCurrentIndex(1)
+        task_size, x, y = widget.board_view.board_geometry()
+        self.assertGreater(demo_size, task_size)
+        self.assertGreaterEqual(x, 0)
+        self.assertGreaterEqual(y, 0)
+        widget.splitter.setSizes([400, 600])
+        self.app.processEvents()
+        self.assertGreater(widget.splitter.sizes()[1], widget.splitter.sizes()[0])
+
+    def test_icons_follow_themed_button_text(self):
+        theme = (Path(__file__).resolve().parents[2] / "ui" / "themes.qss").read_text(encoding="utf-8")
+        button = QPushButton("Run")
+        button.setObjectName("primary")
+        button.setStyleSheet(theme)
+        set_button_icon(button, "play")
+        button.show()
+        self.app.processEvents()
+        image = button.icon().pixmap(48, 48).toImage()
+        colors = {image.pixelColor(x, y).name() for x in range(image.width())
+                  for y in range(image.height()) if image.pixelColor(x, y).alpha() > 200}
+        self.assertIn("#ffffff", colors)
+        button.setEnabled(False)
+        self.app.processEvents()
+        disabled = button.icon().pixmap(48, 48, button.icon().Mode.Disabled).toImage()
+        disabled_colors = {disabled.pixelColor(x, y).name() for x in range(disabled.width())
+                           for y in range(disabled.height()) if disabled.pixelColor(x, y).alpha() > 200}
+        self.assertIn("#ffffff", disabled_colors)
+        button.close()
+
+        nav = QPushButton("Task 2")
+        nav.setObjectName("nav")
+        nav.setCheckable(True)
+        nav.setStyleSheet(theme)
+        set_button_icon(nav, "game")
+        nav.show()
+        for checked in (False, True):
+            nav.setChecked(checked)
+            self.app.processEvents()
+            image = nav.icon().pixmap(48, 48).toImage()
+            colors = {image.pixelColor(x, y).name() for x in range(image.width())
+                      for y in range(image.height()) if image.pixelColor(x, y).alpha() > 200}
+            self.assertIn("#d9e1ea", colors)
+        nav.close()
 
 
 if __name__ == "__main__":

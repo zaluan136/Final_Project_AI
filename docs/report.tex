@@ -1,187 +1,181 @@
 \documentclass[conference]{IEEEtran}
-\usepackage{cite}
-\usepackage{amsmath,amssymb}
-\usepackage{graphicx}
-\usepackage{url}
-\usepackage{amsmath,amssymb,amsfonts}
-\usepackage{textcomp}
 
-% Fill in every [PLACEHOLDER] and remove the guidance comments before submission.
-% Keep the final PDF within five pages, including figures and references.
-% Compile from the repository root: pdflatex -output-directory=docs docs/report.tex
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{url}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
 
 \begin{document}
 
 \title{[Project Title]}
 
-% Add or remove student author blocks as needed. The lecturer must be last.
 \author{
-\IEEEauthorblockN{Nguyen Hoa Khang}
-\IEEEauthorblockA{524H0098\\
-{Department, Institution}\\
-{524H0098@student.tdtu.edu.vn}}
-\and
-\IEEEauthorblockN{Ly Gia Luan}
-\IEEEauthorblockA{524H0101\\
-{Department, Institution}\\
-{524H0101@student.tdtu.edu.vn}}
-\and
-\IEEEauthorblockN{Nguyen Thai Khoa}
-\IEEEauthorblockA{524H0109\\
-{Department, Institution}\\
-{524H0109@student.tdtu.edu.vn}}
-\and
-\IEEEauthorblockN{MSc. Nguyen Thanh An}
-\IEEEauthorblockA{Faculty of Information Technology, Ton Duc Thang University\\
-{nguyenthanhan@tdtu.edu.vn}}
+    \IEEEauthorblockN{1\textsuperscript{st} Nguyen Hoa Khang}
+    \IEEEauthorblockA{524H0098\\
+        {524H0098@student.tdtu.edu.vn}}
+    \and
+    \IEEEauthorblockN{2\textsuperscript{nd} Ly Gia Luan}
+    \IEEEauthorblockA{524H0101\\
+        {524H0101@student.tdtu.edu.vn}}
+    \and
+    \IEEEauthorblockN{3\textsuperscript{rd} Nguyen Thai Khoa}
+    \IEEEauthorblockA{524H0109\\
+        {524H0109@student.tdtu.edu.vn}}
+    \and
+    \IEEEauthorblockN{4\textsuperscript{th} MSc. Nguyen Thanh An}
+    \IEEEauthorblockA{\textit{Faculty of Information Technology, Ton Duc Thang University}\\
+        {nguyenthanhan@tdtu.edu.vn}}
 }
 \maketitle
 
 \begin{abstract}
-[State the project requirements and the three problems. Summarize the
-approaches used, the measured experimental results, and the completion level
-of each task. Use verified results and include no citations in the abstract.]
+    [State the project requirements and the three problems. Summarize the
+        approaches used, the measured experimental results, and the completion level
+        of each task. Use verified results and include no citations in the abstract.]
 \end{abstract}
 
 \begin{IEEEkeywords}
-[N-Queens], [adversarial search], [Kakuro], [constraint satisfaction]
+    [N-Queens], [adversarial search], [Kakuro], [constraint satisfaction]
 \end{IEEEkeywords}
 
 \section{Introduction}
-[Introduce the project objectives, the three tasks, and the scope of this
-report. Briefly explain how the experimental results are evaluated.]
+ [Introduce the project objectives, the three tasks, and the scope of this
+  report. Briefly explain how the experimental results are evaluated.]
 
 \section{N-Queens with SAT and Local Search}
 \subsection{Problem and Approach}
-The N-Queens problem requires placing $N$ queens on an $N\times N$ chessboard so that no two queens attack each other. We implemented two approaches: a propositional-logic model solved using Glucose3 in PySAT~\cite{pysat}, and Min-Conflicts local search~\cite{minton}. We used the same solution verifier for both approaches.
+The N-Queens problem requires placing \(N\) queens on an \(N\times N\) chessboard so that no two queens attack each other. We implemented two approaches: a propositional-logic model solved using Glucose3 in PySAT~\cite{pysat}, and Min-Conflicts local search~\cite{minton}. We used the same solution verifier for both approaches.
 
 \subsubsection{Propositional variables and CNF constraints}
-Each square $(r,c)$ is represented by a Boolean variable $Q_{r,c}$: true means it contains a queen. The $N^2$ primary variables are mapped to PySAT integer identifiers by
+Each square \((r,c)\) is represented by a Boolean variable \(Q_{r,c}\): true means it contains a queen. The \(N^2\) primary variables are mapped to PySAT integer identifiers by
 \begin{equation}
-\operatorname{ID}(r,c)=rN+c+1,\quad 0\leq r,c<N.
-\label{eq:queenvar}
+    \operatorname{ID}(r,c)=rN+c+1,\quad 0\leq r,c<N.
+    \label{eq:queenvar}
 \end{equation}
 We require at least one queen in each row,
-$\bigvee_{c=0}^{N-1}Q_{r,c}$, and at most one queen in every row, column, and diagonal. For two distinct squares $i,j$ belonging to the same group, the Pairwise at-most-one clause is $(\neg Q_i\lor\neg Q_j)$. The combination of exactly one queen per row and at most one per column gives exactly $N$ queens in distinct columns.
+\(\bigvee_{c=0}^{N-1}Q_{r,c}\), and at most one queen in every row, column, and diagonal. For two distinct squares \(i,j\) belonging to the same group, the Pairwise at-most-one clause is \((\neg Q_i\lor\neg Q_j)\). The combination of exactly one queen per row and at most one per column gives exactly \(N\) queens in distinct columns.
 
-To discover the conflicting squares, the implementation visits every board cell once and adds it to four groups: row $r$, column $c$, main diagonal $r-c+N-1$, and anti-diagonal $r+c$. It then generates the row at-least-one clauses and encodes each at-most-one group with PySAT's \texttt{CardEnc.atmost}. We implemented three encodings: Pairwise (binary clauses with no auxiliary variables), Sequential Counter, and Ladder (both using auxiliary variables). For Pairwise encoding without symmetry breaking, counting the row, column, and diagonal pairs gives
+To discover the conflicting squares, the implementation visits every board cell once and adds it to four groups: row \(r\), column \(c\), main diagonal \(r-c+N-1\), and anti-diagonal \(r+c\). It then generates the row at-least-one clauses and encodes each at-most-one group with PySAT's \texttt{CardEnc.atmost}. We implemented three encodings: Pairwise (binary clauses with no auxiliary variables), Sequential Counter, and Ladder (both using auxiliary variables). For Pairwise encoding without symmetry breaking, counting the row, column, and diagonal pairs gives
 \begin{equation}
-C(N)=N+N^2(N-1)+\frac{N(N-1)(2N-1)}{3}.
-\label{eq:queencount}
+    C(N)=N+N^2(N-1)+\frac{N(N-1)(2N-1)}{3}.
+    \label{eq:queencount}
 \end{equation}
-Thus, its CNF clause count grows as $O(N^3)$. The optional symmetry-breaking clause restricts the first-row queen to the left half of the board, including the center when $N$ is odd. This keeps a solution if one exists, but does not preserve all solutions for enumeration.
+Thus, its CNF clause count grows as \(O(N^3)\). The optional symmetry-breaking clause restricts the first-row queen to the left half of the board, including the center when \(N\) is odd. This keeps a solution if one exists, but does not preserve all solutions for enumeration.
 
 \subsubsection{Glucose3 solving}
 After building the CNF, Glucose3 checks whether it is satisfiable. For a satisfying model, positive literals corresponding to board squares are decoded into queen positions, which are then validated using \texttt{verify\_solution()}. We measure CNF construction, solver initialization, and solving separately, because the smallest CNF does not necessarily give the shortest runtime.
 
 \subsubsection{Min-Conflicts and the proposed heuristic}
-In local search, the state $S=[r_0,\ldots,r_{N-1}]$ stores the row $r_c$ of the queen in column $c$. Therefore, one queen is always maintained in each column. We maintain row counts $R$ and diagonal counts $D_1,D_2$ and compute the current conflicts of a queen as
+In local search, the state \(S=[r_0,\ldots,r_{N-1}]\) stores the row \(r_c\) of the queen in column \(c\). Therefore, one queen is always maintained in each column. We maintain row counts \(R\) and diagonal counts \(D_1,D_2\) and compute the current conflicts of a queen as
 \begin{equation}
-f(r,c)=R[r]+D_1[r-c+N-1]+D_2[r+c]-3.
-\label{eq:queenconflicts}
+    f(r,c)=R[r]+D_1[r-c+N-1]+D_2[r+c]-3.
+    \label{eq:queenconflicts}
 \end{equation}
 The subtraction removes the queen's own contribution. After choosing a queen, both strategies move it within its column to a row with the smallest resulting conflict count (randomly breaking ties). Standard Min-Conflicts randomly chooses any conflicted queen. Our \emph{Most-Conflicted} heuristic instead chooses randomly among the queens with the highest conflict count:
-$\,c^*\in\arg\max_{c:f(r_c,c)>0}f(r_c,c)$.
-We wanted to test whether fixing the most-conflicted queen first would reduce the search effort; this is a heuristic, not a guaranteed improvement. The code allows $\max(500,30N)$ steps per attempt and up to 15 random restarts. Failure within this budget does not prove unsatisfiability.
+\(\,c^*\in\arg\max_{c:f(r_c,c)>0}f(r_c,c)\).
+We wanted to test whether fixing the most-conflicted queen first would reduce the search effort; this is a heuristic, not a guaranteed improvement. The code allows \(\max(500,30N)\) steps per attempt and up to 15 random restarts. Failure within this budget does not prove unsatisfiability.
 
 \subsection{Experimental Results and Discussion}
-We ran the benchmark in the application's Benchmark tab with \textbf{five trials per configuration}, using $N=4,8,12,16$ for both algorithm families. The Pairwise clause counts match the encoding without symmetry breaking. The mean solving time measures only Glucose3's search, whereas the mean total time includes CNF construction and initialization. All 12 SAT configurations found a solution in 5/5 trials. Table~\ref{tab:queen_sat} reports the displayed means and CNF sizes.
+We ran the benchmark in the application's Benchmark tab with \textbf{five trials per configuration}, using \(N=4,8,12,16\) for both algorithm families. The Pairwise clause counts match the encoding without symmetry breaking. The mean solving time measures only Glucose3's search, whereas the mean total time includes CNF construction and initialization. All 12 SAT configurations found a solution in 5/5 trials. Table~\ref{tab:queen_sat} reports the displayed means and CNF sizes.
 
 \begin{table}[htbp]
-\caption{Glucose3 Results (5 Trials; Times in ms)}
-\label{tab:queen_sat}
-\centering\scriptsize
-\setlength{\tabcolsep}{3pt}
-\begin{tabular}{r l r r r r}
-\hline
-$N$ & Encoding & Vars & Clauses & Solve & Total \\
-\hline
-4 & Pairwise & 16 & 80 & 0.006 & 0.144 \\
-4 & SeqCounter & 54 & 108 & 0.004 & 0.124 \\
-4 & Ladder & 82 & 216 & 0.008 & 0.193 \\
-8 & Pairwise & 64 & 736 & 0.047 & 0.695 \\
-8 & SeqCounter & 270 & 592 & 0.059 & 0.594 \\
-8 & Ladder & 346 & 988 & 0.031 & 0.638 \\
-12 & Pairwise & 144 & 2608 & 0.064 & 1.347 \\
-12 & SeqCounter & 646 & 1460 & 1.263 & 2.272 \\
-12 & Ladder & 770 & 2272 & 1.109 & 2.495 \\
-16 & Pairwise & 256 & 6336 & 0.964 & 5.358 \\
-16 & SeqCounter & 1182 & 2712 & 4.562 & 6.292 \\
-16 & Ladder & 1354 & 4068 & 3.376 & 5.449 \\
-\hline
-\end{tabular}
+    \caption{Glucose3 Results (5 Trials; Times in ms)}
+    \label{tab:queen_sat}
+    \centering\scriptsize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{r l r r r r}
+        \hline
+        \(N\) & Encoding   & Vars & Clauses & Solve & Total \\
+        \hline
+        4     & Pairwise   & 16   & 80      & 0.006 & 0.144 \\
+        4     & SeqCounter & 54   & 108     & 0.004 & 0.124 \\
+        4     & Ladder     & 82   & 216     & 0.008 & 0.193 \\
+        8     & Pairwise   & 64   & 736     & 0.047 & 0.695 \\
+        8     & SeqCounter & 270  & 592     & 0.059 & 0.594 \\
+        8     & Ladder     & 346  & 988     & 0.031 & 0.638 \\
+        12    & Pairwise   & 144  & 2608    & 0.064 & 1.347 \\
+        12    & SeqCounter & 646  & 1460    & 1.263 & 2.272 \\
+        12    & Ladder     & 770  & 2272    & 1.109 & 2.495 \\
+        16    & Pairwise   & 256  & 6336    & 0.964 & 5.358 \\
+        16    & SeqCounter & 1182 & 2712    & 4.562 & 6.292 \\
+        16    & Ladder     & 1354 & 4068    & 3.376 & 5.449 \\
+        \hline
+    \end{tabular}
 \end{table}
 
-For $N=16$, Sequential Counter uses 2712 clauses versus Pairwise's 6336, but its mean solve time is 4.562~ms versus 0.964~ms. This shows that a smaller clause count does not necessarily mean faster SAT solving. Conversely, for $N=8$, Sequential Counter has a lower mean total time than Pairwise (0.594 versus 0.695~ms). The best choice depends on the metric and test size.
+For \(N=16\), Sequential Counter uses 2712 clauses versus Pairwise's 6336, but its mean solve time is 4.562~ms versus 0.964~ms. This shows that a smaller clause count does not necessarily mean faster SAT solving. Conversely, for \(N=8\), Sequential Counter has a lower mean total time than Pairwise (0.594 versus 0.695~ms). The best choice depends on the metric and test size.
 
 The local-search benchmark uses the same four board sizes and five trials for each strategy. Table~\ref{tab:queen_local} shows the means displayed in the application; all eight configurations were successful in 5/5 runs.
 \begin{table}[htbp]
-\caption{Min-Conflicts Results (5 Trials; Times in ms)}
-\label{tab:queen_local}
-\centering\scriptsize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{r l r r}
-\hline
-$N$ & Strategy & Success & Mean total \\
-\hline
-4 & Standard & 5/5 & 0.029 \\
-4 & Most-Conflicted & 5/5 & 0.032 \\
-8 & Standard & 5/5 & 0.328 \\
-8 & Most-Conflicted & 5/5 & 0.183 \\
-12 & Standard & 5/5 & 0.184 \\
-12 & Most-Conflicted & 5/5 & 0.221 \\
-16 & Standard & 5/5 & 0.445 \\
-16 & Most-Conflicted & 5/5 & 0.235 \\
-\hline
-\end{tabular}
+    \caption{Min-Conflicts Results (5 Trials; Times in ms)}
+    \label{tab:queen_local}
+    \centering\scriptsize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{r l r r}
+        \hline
+        \(N\) & Strategy        & Success & Mean total \\
+        \hline
+        4     & Standard        & 5/5     & 0.029      \\
+        4     & Most-Conflicted & 5/5     & 0.032      \\
+        8     & Standard        & 5/5     & 0.328      \\
+        8     & Most-Conflicted & 5/5     & 0.183      \\
+        12    & Standard        & 5/5     & 0.184      \\
+        12    & Most-Conflicted & 5/5     & 0.221      \\
+        16    & Standard        & 5/5     & 0.445      \\
+        16    & Most-Conflicted & 5/5     & 0.235      \\
+        \hline
+    \end{tabular}
 \end{table}
 
-Most-Conflicted had a lower mean time at $N=8$ and $N=16$, but Standard was faster at $N=4$ and $N=12$. Therefore, the five-trial results do not establish that our heuristic is consistently faster. These short runtimes can also be affected by measurement noise; additional trials and larger boards would make the comparison more reliable. The application also supports CSV export, which we can use for further analysis of steps and median runtimes. Overall, the two methods produced valid placements, while their performance depended on encoding or variable-selection choices.
+Most-Conflicted had a lower mean time at \(N=8\) and \(N=16\), but Standard was faster at \(N=4\) and \(N=12\). Therefore, the five-trial results do not establish that our heuristic is consistently faster. These short runtimes can also be affected by measurement noise; additional trials and larger boards would make the comparison more reliable. The application also supports CSV export, which we can use for further analysis of steps and median runtimes. Overall, the two methods produced valid placements, while their performance depended on encoding or variable-selection choices.
 
 \section{Adversarial Search for Tank Battle}
 \subsection{Problem and Approach}
 [Describe the game state, available actions, evaluation, and implemented
-search methods, including Minimax and Alpha-Beta where applicable. Explain
-assumptions and limitations relevant to the implementation.]
+    search methods, including Minimax and Alpha-Beta where applicable. Explain
+    assumptions and limitations relevant to the implementation.]
 
 \subsection{Experimental Results}
 [State the scenarios, configurations, measurement method, and observed
-results. Use comparable settings and identify any approximations.]
+    results. Use comparable settings and identify any approximations.]
 
 \begin{table}[htbp]
-\caption{Tank Battle Experimental Results}
-\label{tab:tank}
-\centering
-\begin{tabular}{lcc}
-\hline
-Method & [Metric 1] & [Metric 2] \\
-\hline
-[Method] & [Value] & [Value] \\
-\hline
-\end{tabular}
+    \caption{Tank Battle Experimental Results}
+    \label{tab:tank}
+    \centering
+    \begin{tabular}{lcc}
+        \hline
+        Method   & [Metric 1] & [Metric 2] \\
+        \hline
+        [Method] & [Value]    & [Value]    \\
+        \hline
+    \end{tabular}
 \end{table}
 
 \section{Kakuro as a Constraint Satisfaction Problem}
 \subsection{Problem and Approach}
 [Define variables, domains, and constraints. Explain Backtracking and the
-roles of Forward Checking, MRV, Degree, and LCV as implemented. Cite sources.]
+    roles of Forward Checking, MRV, Degree, and LCV as implemented. Cite sources.]
 
 \subsection{Experimental Results}
 [Identify the board, verification method, measured results, and limitations.
-Do not claim that the implementation uses AC-3 or proves uniqueness unless
-those claims are supported by the implementation and experiment.]
+    Do not claim that the implementation uses AC-3 or proves uniqueness unless
+    those claims are supported by the implementation and experiment.]
 
 \begin{table}[htbp]
-\caption{Kakuro Experimental Results}
-\label{tab:kakuro}
-\centering
-\begin{tabular}{lcc}
-\hline
-Board & [Metric] & Result \\
-\hline
-[Board] & [Value] & [Result] \\
-\hline
-\end{tabular}
+    \caption{Kakuro Experimental Results}
+    \label{tab:kakuro}
+    \centering
+    \begin{tabular}{lcc}
+        \hline
+        Board   & [Metric] & Result   \\
+        \hline
+        [Board] & [Value]  & [Result] \\
+        \hline
+    \end{tabular}
 \end{table}
 
 % Optional figure example. Put the image in docs/figures/, cite it in the text,
@@ -194,54 +188,54 @@ Board & [Metric] & Result \\
 % \end{figure}
 
 \section{Contributions}
-[Describe each member's individual work and completion level. Add one row per
-member; percentages must reflect the group's actual assessment.]
+ [Describe each member's individual work and completion level. Add one row per
+  member; percentages must reflect the group's actual assessment.]
 
 \begin{table}[htbp]
-\caption{Individual Contributions}
-\label{tab:contributions}
-\centering
-\begin{tabular}{p{0.23\columnwidth}p{0.48\columnwidth}c}
-\hline
-Member / ID & Individual work & Completion \\
-\hline
-{[Name / ID]} & [Tasks and responsibilities] & [0--100\%] \\
-{[Name / ID]} & [Tasks and responsibilities] & [0--100\%] \\
-{[Name / ID]} & [Tasks and responsibilities] & [0--100\%] \\
-\hline
-\end{tabular}
+    \caption{Individual Contributions}
+    \label{tab:contributions}
+    \centering
+    \begin{tabular}{p{0.26\columnwidth}p{0.44\columnwidth}c}
+        \hline
+        Member             & Individual work        & Completion \\
+        \hline
+        {Nguyen Hoa Khang} & Task 3 and ... [so on] & 100\%      \\
+        {Ly Gia Luan}      & Task 1 and ... [so on] & 100\%      \\
+        {Nguyen Thai Khoa} & Task 2 and ... [so on] & 100\%      \\
+        \hline
+    \end{tabular}
 \end{table}
 
 \section{Self-Evaluation}
-[Evaluate each task against the assignment requirements. Record completion,
-missing work, and the estimated score using the assignment's actual rubric.]
+ [Evaluate each task against the assignment requirements. Record completion,
+  missing work, and the estimated score using the assignment's actual rubric.]
 
 \begin{table}[htbp]
-\caption{Task Completion and Estimated Scores}
-\label{tab:evaluation}
-\centering
-\begin{tabular}{lccc}
-\hline
-Task & Completion & Score & Maximum \\
-\hline
-Task 1 & [\%] & [Score] & [Max] \\
-Task 2 & [\%] & [Score] & [Max] \\
-Task 3 & [\%] & [Score] & [Max] \\
-Report / interview & [\%] & [Score] & [Max] \\
-\hline
-\end{tabular}
+    \caption{Task Completion and Estimated Scores}
+    \label{tab:evaluation}
+    \centering
+    \begin{tabular}{lccc}
+        \hline
+        Task               & Completion & Score   & Maximum \\
+        \hline
+        Task 1             & [\%]       & [Score] & [Max]   \\
+        Task 2             & [\%]       & [Score] & [Max]   \\
+        Task 3             & 90\%       & 9       & 9       \\
+        Report / interview & [\%]       & [Score] & [Max]   \\
+        \hline
+    \end{tabular}
 \end{table}
 
 \section{Conclusion}
-[Summarize the project requirements, approaches, measured results, and
-completion levels. State important limitations and possible future work.]
+ [Summarize the project requirements, approaches, measured results, and
+  completion levels. State important limitations and possible future work.]
 
 % Replace the example with sources actually used, formatted in IEEE style.
 % Cite every source used by the remaining tasks.
 \begin{thebibliography}{00}
-\bibitem{pysat} A. Ignatiev, A. Morgado, and J. Marques-Silva, ``PySAT: A Python Toolkit for Prototyping with SAT Oracles,'' in \emph{Theory and Applications of Satisfiability Testing -- SAT 2018}, 2018, pp. 428--437.
-\bibitem{minton} S. Minton, M. D. Johnston, A. B. Philips, and P. Laird, ``Minimizing conflicts: A heuristic repair method for constraint satisfaction and scheduling problems,'' \emph{Artificial Intelligence}, vol. 58, no. 1--3, pp. 161--205, 1992.
-% Add references used by Task 2 and Task 3 here.
+    \bibitem{pysat} A. Ignatiev, A. Morgado, and J. Marques-Silva, ``PySAT: A Python Toolkit for Prototyping with SAT Oracles,'' in \emph{Theory and Applications of Satisfiability Testing -- SAT 2018}, 2018, pp. 428--437.
+    \bibitem{minton} S. Minton, M. D. Johnston, A. B. Philips, and P. Laird, ``Minimizing conflicts: A heuristic repair method for constraint satisfaction and scheduling problems,'' \emph{Artificial Intelligence}, vol. 58, no. 1--3, pp. 161--205, 1992.
+    % Add references used by Task 2 and Task 3 here.
 \end{thebibliography}
 
 \end{document}

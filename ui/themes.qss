@@ -44,6 +44,10 @@ QPushButton#primary {
 QPushButton#primary:hover {
   background-color: #42658e;
 }
+QPushButton#primary:disabled {
+  background-color: #8896a6;
+  border-color: #8896a6;
+}
 QPushButton#nav {
   background: transparent;
   color: #d9e1ea;
@@ -56,7 +60,7 @@ QPushButton#nav:hover {
 }
 QPushButton#nav:checked {
   background-color: #42546a;
-  color: white;
+  color: #d9e1ea;
 }
 QFrame#card,
 QFrame#panel {

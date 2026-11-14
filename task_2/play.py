@@ -1,4 +1,4 @@
-"""Pygame playground. Run: python -m task_2.play.
+"""Pygame playground. Run: python -m task_2.
 
 The engine stays independent of pygame.
 """
@@ -26,6 +26,7 @@ from task_2.core.state import Action, Direction, Wall
 
 COLORS = [(74, 169, 255), (255, 112, 105)]
 BG, PANEL, FG, MUTED = (20, 25, 34), (30, 38, 50), (229, 235, 244), (157, 171, 190)
+CANVAS_SIZE = (1200, 820)
 MODE_LABELS = ["Minimax", "Alpha-Beta", "Heuristic Minimax", "Heuristic + AB"]
 MODES = list(CONFIGURATIONS)
 KEY_ACTION = {
@@ -44,13 +45,12 @@ KEY_ACTION = {
 
 class Playground:
     def __init__(self, screen=None):
-        self.screen = screen or pygame.display.set_mode((1200, 820))
-        self.embedded_mouse_pos = None
+        self.screen = (
+            screen if screen is not None else pygame.display.set_mode(CANVAS_SIZE)
+        )
+        self.embedded_mouse_pos: tuple[int, int] | None = None
         pygame.display.set_caption("Tank Battle | temporary playground")
-        self.font = pygame.font.SysFont("segoeui", 18)
-        self.small = pygame.font.SysFont("segoeui", 15)
-        self.action_font = pygame.font.SysFont("segoeui", 16, bold=True)
-        self.title = pygame.font.SysFont("segoeui", 25, bold=True)
+        self.set_fonts()
         self.clock = pygame.time.Clock()
         self.asset_dir = Path(__file__).resolve().parent / "asset"
         self.sprites = {
@@ -96,6 +96,36 @@ class Playground:
         self.bench_rows = []
         self.geometry()
 
+    def set_fonts(self, scale=None):
+        def make_font(size, bold):
+            if scale is None:
+                return pygame.font.SysFont("segoeui", size, bold=bold)
+            from .scaled_canvas import ScaledFont
+            return ScaledFont(size, bold, scale)
+        self.font = make_font(18, False)
+        self.small = make_font(15, False)
+        self.action_font = make_font(16, True)
+        self.title = make_font(25, True)
+
+    def resize_canvas(self, size):
+        from .scaled_canvas import ScaledCanvas
+
+        self.screen = ScaledCanvas(size)
+        scale = min(size[0] / CANVAS_SIZE[0], size[1] / CANVAS_SIZE[1])
+        self.set_fonts(scale)
+
+    @staticmethod
+    def draw_rect(target, *args, **kwargs):
+        if hasattr(target, "draw_rect"):
+            return target.draw_rect(*args, **kwargs)
+        return pygame.draw.rect(target, *args, **kwargs)
+
+    @staticmethod
+    def draw_circle(target, *args, **kwargs):
+        if hasattr(target, "draw_circle"):
+            return target.draw_circle(*args, **kwargs)
+        return pygame.draw.circle(target, *args, **kwargs)
+
     def geometry(self):
         state = self.state
         width = 690 if self.panel_open else self.screen.get_width() - 40
@@ -140,7 +170,9 @@ class Playground:
         top, bottom, border = palettes[
             "info" if active and style == "neutral" else style
         ]
-        mouse_pos = self.embedded_mouse_pos if self.embedded_mouse_pos is not None else pygame.mouse.get_pos()
+        mouse_pos = self.embedded_mouse_pos
+        if mouse_pos is None:
+            mouse_pos = pygame.mouse.get_pos()
         hovered = rect.collidepoint(mouse_pos)
         surface = pygame.Surface(rect.size, pygame.SRCALPHA)
         for y in range(rect.height):
@@ -151,10 +183,10 @@ class Playground:
             )
             pygame.draw.line(surface, color, (0, y), (rect.width - 1, y))
         mask = pygame.Surface(rect.size, pygame.SRCALPHA)
-        pygame.draw.rect(mask, (255, 255, 255), mask.get_rect(), border_radius=6)
+        self.draw_rect(mask, (255, 255, 255), mask.get_rect(), border_radius=6)
         surface.blit(mask, (0, 0), special_flags=pygame.BLEND_RGBA_MULT)
         self.screen.blit(surface, rect)
-        pygame.draw.rect(
+        self.draw_rect(
             self.screen, border, rect, 2 if active or hovered else 1, border_radius=6
         )
         font = self.action_font if style != "neutral" else self.small
@@ -170,9 +202,9 @@ class Playground:
     def field(self, name, label, rect):
         rect = pygame.Rect(rect)
         self.text(label, rect.x, rect.y - 20, MUTED, True)
-        pygame.draw.rect(self.screen, (15, 21, 30), rect, border_radius=4)
+        self.draw_rect(self.screen, (15, 21, 30), rect, border_radius=4)
         if name == self.active_field:
-            pygame.draw.rect(self.screen, COLORS[0], rect, 1, border_radius=4)
+            self.draw_rect(self.screen, COLORS[0], rect, 1, border_radius=4)
         visible = self.fields[name]
         while self.small.size(visible)[0] > rect.width - 14:
             visible = visible[1:]
@@ -643,7 +675,7 @@ class Playground:
                     self.cell,
                 )
                 self.screen.blit(self.sprite("ground", self.cell), rect)
-                pygame.draw.rect(self.screen, (38, 51, 43), rect, 1)
+                self.draw_rect(self.screen, (38, 51, 43), rect, 1)
 
         def box(entity, inset=6):
             return pygame.Rect(
@@ -662,9 +694,7 @@ class Playground:
                 continue
             rect = box(base, 0)
             self.screen.blit(self.sprite(f'base_{"ab"[base.team]}', self.cell), rect)
-            pygame.draw.rect(
-                self.screen, (20, 26, 30), (rect.x + 2, rect.y + 2, 29, 17)
-            )
+            self.draw_rect(self.screen, (20, 26, 30), (rect.x + 2, rect.y + 2, 29, 17))
             self.text(f'{"AB"[base.team]}:{base.hp}', rect.x + 3, rect.y + 2, FG, True)
         for tank in s.tanks:
             if tank.hp <= 0:
@@ -674,19 +704,15 @@ class Playground:
             self.screen.blit(self.sprite(name, self.cell, tank.direction), rect)
             center = rect.center
             if tank.id == self.selected:
-                pygame.draw.rect(
-                    self.screen, FG, rect.inflate(8, 8), 2, border_radius=5
-                )
+                self.draw_rect(self.screen, FG, rect.inflate(8, 8), 2, border_radius=5)
             if self.runner and tank.id == self.runner.human:
-                pygame.draw.circle(
+                self.draw_circle(
                     self.screen, (255, 220, 95), center, self.cell // 2 - 2, 2
                 )
             label = f'{"?" if tank.team is None else "AB"[tank.team]}{tank.id}'
-            pygame.draw.rect(
-                self.screen, (20, 26, 30), (rect.x + 2, rect.y + 2, 26, 17)
-            )
+            self.draw_rect(self.screen, (20, 26, 30), (rect.x + 2, rect.y + 2, 26, 17))
             self.text(label, rect.x + 3, rect.y + 2, FG, True)
-            pygame.draw.rect(
+            self.draw_rect(
                 self.screen, (20, 26, 30), (rect.right - 16, rect.bottom - 18, 14, 16)
             )
             self.text(tank.hp, rect.right - 15, rect.bottom - 19, FG, True)
@@ -718,7 +744,7 @@ class Playground:
                     self.cell - 4,
                     self.cell - 4,
                 )
-                pygame.draw.rect(self.screen, (236, 203, 94), rect, 1)
+                self.draw_rect(self.screen, (236, 203, 94), rect, 1)
 
     def draw_tracers(self, now):
         """One short moving arrow per shot; fade completely within 180 ms."""
@@ -759,7 +785,7 @@ class Playground:
                 )
             return
         x = 745
-        pygame.draw.rect(self.screen, PANEL, (730, 0, 470, 820))
+        self.draw_rect(self.screen, PANEL, (730, 0, 470, 820))
         self.text("SETUP" if not self.runner else "MATCH", x, 20)
         self.button(
             "Hide panel" if self.panel_open else "Show panel",
@@ -968,7 +994,7 @@ class Playground:
         self.geometry()
 
     def draw_charts(self):
-        pygame.draw.rect(self.screen, BG, (0, 0, 730, 780))
+        self.draw_rect(self.screen, BG, (0, 0, 730, 780))
         self.text("Search comparison (3 repeats)", 25, 25)
         self.button(
             "Terminal scenarios",
@@ -999,7 +1025,7 @@ class Playground:
                 value = getattr(row, attribute)
                 self.text(MODE_LABELS[MODES.index(row.mode)], 25, yy, MUTED, True)
                 width = max(1, int(285 * value / maximum))
-                pygame.draw.rect(
+                self.draw_rect(
                     self.screen,
                     [COLORS[0], COLORS[1], (136, 201, 132), (199, 157, 245)][j],
                     (220, yy + 3, width, 16),
@@ -1050,7 +1076,7 @@ class Playground:
         self.draw_panel()
         if self.overlay:
             self.draw_charts()
-        pygame.draw.rect(self.screen, (12, 17, 24), (0, 784, 1200, 36))
+        self.draw_rect(self.screen, (12, 17, 24), (0, 784, 1200, 36))
         message = (
             "AI computing... " if self.future and self.job == "collect" else ""
         ) + self.message
@@ -1076,8 +1102,30 @@ class Playground:
             self.close()
 
 
+def enable_windows_dpi_awareness():
+    if sys.platform != "win32":
+        return
+    import ctypes
+
+    try:
+        user32 = ctypes.windll.user32
+        set_context = user32.SetProcessDpiAwarenessContext
+        set_context.argtypes = [ctypes.c_void_p]
+        set_context.restype = ctypes.c_bool
+        if set_context(ctypes.c_void_p(-2)):
+            return
+    except (AttributeError, OSError):
+        pass
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()
+    except (AttributeError, OSError):
+        pass
+
+
 def run(screen=None, clock=None):
     """Launcher entry: returns without quitting the launcher's pygame instance."""
+    if screen is None and not pygame.display.get_init():
+        enable_windows_dpi_awareness()
     pygame.init()
     app = Playground(screen)
     if clock is not None:

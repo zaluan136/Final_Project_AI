@@ -37,7 +37,7 @@ Mở launcher và chọn task ở thanh bên:
 python launcher.py
 ```
 
-Task 1 và 3 dùng theme chung `ui/themes.qss`. Task 2 được nhúng trong launcher và tự co giãn theo tỷ lệ khi đổi kích thước cửa sổ. Nội dung Pygame được vẽ ở độ phân giải 1200 × 820 rồi thu phóng mượt; chữ và hình có thể hơi mờ khi thu nhỏ. Giao diện Pygame không chịu ảnh hưởng của QSS. Có thể chạy từng task trực tiếp:
+Task 1 và 3 dùng theme chung `ui/themes.qss`. Task 2 được nhúng trong launcher và tự co giãn theo tỷ lệ khi đổi kích thước cửa sổ; chữ và đường viền được vẽ theo độ phân giải hiển thị. Giao diện Pygame không chịu ảnh hưởng của QSS. Có thể chạy từng task trực tiếp:
 
 ```bash
 python -m task_1

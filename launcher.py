@@ -4,6 +4,7 @@ import importlib.util
 import sys
 from pathlib import Path
 
+from PySide6.QtCore import QDir
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
@@ -191,9 +192,14 @@ class LauncherWindow(QMainWindow):
 
 
 def main() -> int:
-    app = QApplication.instance() or QApplication(sys.argv)
+    app = QApplication.instance()
+    if app is None:
+        app = QApplication(sys.argv)
+    if not isinstance(app, QApplication):
+        raise RuntimeError("Launcher requires a QApplication")
     theme = Path(__file__).resolve().parent / "ui" / "themes.qss"
     if theme.is_file():
+        QDir.addSearchPath("theme", str(theme.parent))
         app.setStyleSheet(theme.read_text(encoding="utf-8"))
     window = LauncherWindow()
     window.show()

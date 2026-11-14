@@ -45,6 +45,7 @@ KEY_ACTION = {
 class Playground:
     def __init__(self, screen=None):
         self.screen = screen or pygame.display.set_mode((1200, 820))
+        self.embedded_mouse_pos = None
         pygame.display.set_caption("Tank Battle | temporary playground")
         self.font = pygame.font.SysFont("segoeui", 18)
         self.small = pygame.font.SysFont("segoeui", 15)
@@ -139,7 +140,8 @@ class Playground:
         top, bottom, border = palettes[
             "info" if active and style == "neutral" else style
         ]
-        hovered = rect.collidepoint(pygame.mouse.get_pos())
+        mouse_pos = self.embedded_mouse_pos if self.embedded_mouse_pos is not None else pygame.mouse.get_pos()
+        hovered = rect.collidepoint(mouse_pos)
         surface = pygame.Surface(rect.size, pygame.SRCALPHA)
         for y in range(rect.height):
             ratio = y / max(1, rect.height - 1)

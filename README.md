@@ -8,12 +8,13 @@
 
 ## Cài đặt
 
-Khuyến nghị dùng Python 3.12 hoặc 3.13. Trên Windows, Pygame 2.6.1 có thể gặp lỗi biên dịch khi cài với Python 3.14. Các lệnh dưới đây chạy từ thư mục gốc dự án.
+Khuyến nghị dùng Python 3.12. Trên Windows, Pygame 2.6.1 có thể gặp lỗi biên dịch khi cài với Python 3.14. Các lệnh dưới đây chạy từ thư mục gốc dự án.
 
 Tạo và kích hoạt môi trường ảo trên Windows PowerShell:
 
 ```powershell
-py -3.13 -m venv .venv
+winget install -e --id Python.Python.3.12
+py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 ```
@@ -36,7 +37,7 @@ Mở launcher và chọn task ở thanh bên:
 python launcher.py
 ```
 
-Task 1 và 3 hiển thị trong launcher; Task 2 mở cửa sổ riêng. Có thể chạy từng task trực tiếp:
+Task 1 và 3 dùng theme chung `ui/themes.qss`. Task 2 được nhúng trong launcher và tự co giãn theo tỷ lệ khi đổi kích thước cửa sổ. Nội dung Pygame được vẽ ở độ phân giải 1200 × 820 rồi thu phóng mượt; chữ và hình có thể hơi mờ khi thu nhỏ. Giao diện Pygame không chịu ảnh hưởng của QSS. Có thể chạy từng task trực tiếp:
 
 ```bash
 python -m task_1

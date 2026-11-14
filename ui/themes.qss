@@ -1,0 +1,25 @@
+QWidget { background-color: #f4f5f7; color: #20242b; font-family: "Segoe UI", "Helvetica Neue", sans-serif; font-size: 13px; }
+QFrame#sidebar { background-color: #202731; }
+QFrame#sidebar QLabel { background: transparent; color: #cbd3dd; }
+QFrame#sidebar QLabel#brand { color: white; font-size: 19px; font-weight: bold; }
+QFrame#sidebar QLabel#eyebrow { color: #9eacba; font-size: 10px; }
+QPushButton { background-color: #ffffff; border: 1px solid #ccd3dc; border-radius: 5px; padding: 7px 12px; }
+QPushButton:hover { background-color: #e9eef5; }
+QPushButton:pressed { background-color: #dce4ee; }
+QPushButton:disabled { color: #a0a7b0; background-color: #eceef0; }
+QPushButton#primary { background-color: #334e70; color: white; border-color: #334e70; }
+QPushButton#primary:hover { background-color: #42658e; }
+QPushButton#nav { background: transparent; color: #d9e1ea; border: none; text-align: left; padding: 10px; }
+QPushButton#nav:hover { background-color: #344253; }
+QPushButton#nav:checked { background-color: #42546a; color: white; }
+QFrame#card, QFrame#panel { background-color: white; border: 1px solid #dce1e7; border-radius: 7px; }
+QFrame#card QLabel, QFrame#panel QLabel { background: transparent; }
+QLabel#pageTitle, QLabel#heading, QLabel#title { font-size: 24px; font-weight: bold; }
+QLabel#cardTitle, QLabel#section { font-size: 16px; font-weight: bold; }
+QLabel#muted { color: #697583; }
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QTextEdit, QPlainTextEdit, QListWidget { background-color: white; border: 1px solid #cbd3dc; border-radius: 4px; padding: 4px; selection-background-color: #52769d; }
+QScrollArea { border: 1px solid #dce1e7; background-color: #e6e9ed; }
+QScrollBar:vertical { background: #edf0f3; width: 12px; margin: 0; }
+QScrollBar::handle:vertical { background: #aab6c3; border-radius: 5px; min-height: 24px; }
+QScrollBar:horizontal { background: #edf0f3; height: 12px; margin: 0; }
+QScrollBar::handle:horizontal { background: #aab6c3; border-radius: 5px; min-width: 24px; }

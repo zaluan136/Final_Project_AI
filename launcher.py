@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import importlib.util
 import sys
+from pathlib import Path
 
-from PySide6.QtCore import QProcess
 from PySide6.QtWidgets import (
     QApplication,
     QFrame,
@@ -59,10 +59,7 @@ class LauncherWindow(QMainWindow):
         self.resize(1360, 850)
         self.setMinimumSize(1050, 680)
 
-        self.task_two = QProcess(self)
-        self.task_two.setProgram(sys.executable)
-        self.task_two.setArguments(["-m", "task_2"])
-        self.task_two.errorOccurred.connect(self._task_two_error)
+        self.task_two = None
 
         root = QWidget()
         root.setObjectName("appRoot")
@@ -84,13 +81,15 @@ class LauncherWindow(QMainWindow):
         self.pages = QStackedWidget()
         self.pages.addWidget(self._home_page())
         self.pages.addWidget(task_one_page())
+        self.pages.addWidget(self._task_two_page())
         self.pages.addWidget(KakuroWidget())
 
         self.nav_buttons: list[QPushButton] = []
         for title, icon_name, page_index in (
             ("General", "home", 0),
             ("Task 1 - N-Queens", "queen", 1),
-            ("Task 3 - Kakuro", "grid", 2),
+            ("Task 2 - Tank Battle", "game", 2),
+            ("Task 3 - Kakuro", "grid", 3),
         ):
             button = QPushButton(title)
             button.setObjectName("nav")
@@ -100,13 +99,6 @@ class LauncherWindow(QMainWindow):
             navigation.addWidget(button)
             self.nav_buttons.append(button)
 
-        task_two_button = QPushButton("Task 2 - Tank Battle")
-        task_two_button.setObjectName("nav")
-        set_button_icon(task_two_button, "game")
-        task_two_button.clicked.connect(self.open_task_two)
-        navigation.insertWidget(
-            navigation.indexOf(self.nav_buttons[2]), task_two_button
-        )
         navigation.addStretch()
         navigation.addWidget(label("524H0098  -  524H0101  -  524H0109", "muted"))
 
@@ -129,7 +121,7 @@ class LauncherWindow(QMainWindow):
         cards.setSpacing(16)
         for title, description in (
             ("01   N-Queens", "SAT Solver và Min-Conflicts"),
-            ("02   Tank Battle", "Pygame - chạy trong cửa sổ riêng"),
+            ("02   Tank Battle", "Pygame - màn hình trò chơi"),
             (
                 "03   Kakuro CSP",
                 "Backtracking, MRV, Degree, LCV và Forward Checking",
@@ -153,9 +145,20 @@ class LauncherWindow(QMainWindow):
         self.pages.setCurrentIndex(index)
         for button_index, button in enumerate(self.nav_buttons):
             button.setChecked(button_index == index)
+        if index == 2:
+            self.open_task_two()
+
+    def _task_two_page(self) -> QWidget:
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.addWidget(label("Task 2 - Tank Battle", "pageTitle"))
+        self.task_two_layout = layout
+        return page
 
     def open_task_two(self) -> None:
-        if self.task_two.state() != QProcess.ProcessState.NotRunning:
+        if self.task_two is not None:
+            self.task_two.setFocus()
             return
         if importlib.util.find_spec("task_2") is None:
             QMessageBox.information(
@@ -171,22 +174,27 @@ class LauncherWindow(QMainWindow):
                 "Cài dependency bằng lệnh: python -m pip install -r requirements.txt",
             )
             return
-        self.task_two.start()
-
-    def _task_two_error(self, _error: QProcess.ProcessError) -> None:
-        QMessageBox.warning(self, "Không thể mở Task 2", self.task_two.errorString())
+        try:
+            from task_2.qt_widget import TankBattleWidget
+            widget = TankBattleWidget()
+            widget.start()
+        except Exception as exc:
+            QMessageBox.warning(self, "Không thể mở Task 2", str(exc))
+            return
+        self.task_two = widget
+        self.task_two_layout.addWidget(widget, 1)
 
     def closeEvent(self, event) -> None:
-        if self.task_two.state() != QProcess.ProcessState.NotRunning:
-            self.task_two.terminate()
-            if not self.task_two.waitForFinished(1500):
-                self.task_two.kill()
-                self.task_two.waitForFinished(500)
+        if self.task_two is not None:
+            self.task_two.stop()
         super().closeEvent(event)
 
 
 def main() -> int:
     app = QApplication.instance() or QApplication(sys.argv)
+    theme = Path(__file__).resolve().parent / "ui" / "themes.qss"
+    if theme.is_file():
+        app.setStyleSheet(theme.read_text(encoding="utf-8"))
     window = LauncherWindow()
     window.show()
     return app.exec()

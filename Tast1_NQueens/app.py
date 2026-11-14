@@ -1,24 +1,19 @@
 """N-Queens Studio: standalone PySide6 frontend, independent of group launcher."""
 from __future__ import annotations
-import csv
 import sys
-from dataclasses import asdict
-from pathlib import Path
 from time import perf_counter
 
 from PySide6.QtCore import Qt, QThread, Signal, QTimer
-from PySide6.QtGui import QFont, QPainter, QColor, QPen, QBrush
+from PySide6.QtGui import QFont, QPainter, QColor
 from PySide6.QtWidgets import (
     QApplication, QWidget, QMainWindow, QFrame, QLabel, QPushButton, QVBoxLayout,
-    QHBoxLayout, QGridLayout, QComboBox, QSpinBox, QCheckBox, QStackedWidget,
-    QTableWidget, QTableWidgetItem, QHeaderView, QFileDialog, QMessageBox,
-    QSizePolicy, QScrollArea
+    QHBoxLayout, QComboBox, QSpinBox, QCheckBox, QStackedWidget, QMessageBox,
+    QSizePolicy
 )
 
 from core import verify_solution
-from sat import SATSolver, CNFEncoder
+from sat import SATSolver
 from core import MinConflictsSolver
-from experiments import sat_experiments, local_experiments, export_csv
 
 BG = '#0B1020'
 SURFACE = '#121B2E'
@@ -50,11 +45,6 @@ QComboBox, QSpinBox { background: #0F1B30; color: white; border: 1px solid #5267
 QComboBox QAbstractItemView { background: #17243B; color: white; selection-background-color: #2E73C8; }
 QSpinBox::up-button, QSpinBox::down-button { width: 20px; }
 QCheckBox { spacing: 10px; color: white; }
-QTableWidget { background: #121B2E; alternate-background-color: #1D2C43; gridline-color: #2A3D54; color: white; border: 1px solid #293A54; border-radius: 9px; }
-QHeaderView::section { background: #253958; color: #FFFFFF; padding: 10px; border: 0; font-weight: bold; }
-QScrollArea { border: 0; background: transparent; }
-QScrollBar:vertical { background: #111A2D; width: 10px; }
-QScrollBar::handle:vertical { background: #415A79; border-radius: 5px; }
 '''
 
 
@@ -128,7 +118,7 @@ class SolveWorker(QThread):
         n, method, encoding, symmetry, heuristic, seed, steps = self.args
         try:
             started = perf_counter()
-            if method == 'SAT / Glucose3':
+            if method.startswith('SAT / Glucose3'):
                 result = SATSolver(n, encoding, symmetry).solve()
                 family = 'SAT'
             else:
@@ -141,31 +131,13 @@ class SolveWorker(QThread):
             self.failed.emit(f'{type(exc).__name__}: {exc}')
 
 
-class BenchWorker(QThread):
-    completed = Signal(object)
-    failed = Signal(str)
-
-    def __init__(self, ns, trials, family):
-        super().__init__(); self.ns, self.trials, self.family = ns, trials, family
-
-    def run(self):
-        try:
-            rows = (sat_experiments(self.ns, trials=self.trials)
-                    if self.family == 'SAT' else local_experiments(self.ns, trials=self.trials))
-            self.completed.emit(rows)
-        except Exception as exc:
-            self.failed.emit(f'{type(exc).__name__}: {exc}')
-
-
 class NQueensPage(QWidget):
     """Importable game page: parent launcher can add this widget to QStackedWidget."""
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName('root')
         self._worker = None
-        self._bench_worker = None
         self._clock_start = None
-        self._bench_rows = []
         self._clock = QTimer(self)
         self._clock.setInterval(8)  # best-effort UI refresh; not a guaranteed 120 FPS
         self._clock.timeout.connect(self._tick)
@@ -179,25 +151,25 @@ class NQueensPage(QWidget):
         nav.addWidget(text('TASK 01  /  N-QUEENS', 'muted', 10))
         nav.addSpacing(24)
         self.nav_buttons = []
-        for label, index in [('♛    Solve & Visualize', 0), ('▤    CNF Analysis', 1), ('◷    Benchmark', 2)]:
+        for label, index in [('Solve N-Queens', 0), ('CNF Analysis', 1)]:
             btn = QPushButton(label); btn.setObjectName('navigation'); btn.setProperty('active', index == 0)
             btn.clicked.connect(lambda _, i=index: self._go(i))
             nav.addWidget(btn); self.nav_buttons.append(btn)
         nav.addStretch(1)
-        nav.addWidget(text('Designed for group integration', 'muted', 10))
-        nav.addWidget(text('N-Queens · Tank Battle · Kakuro', 'muted', 9))
+        nav.addWidget(text('Constraint Satisfaction Problem', 'muted', 10))
+        nav.addWidget(text('Variables / Domains / Constraints', 'muted', 9))
         root.addWidget(sidebar)
         main = QWidget(); main.setObjectName('root')
         ml = QVBoxLayout(main); ml.setContentsMargins(28, 22, 28, 22); ml.setSpacing(18)
         header = QHBoxLayout()
         titlecol = QVBoxLayout(); titlecol.setSpacing(2)
         titlecol.addWidget(text('N-Queens Studio', 'heading'))
-        titlecol.addWidget(text('SAT solving, CNF encoding & local search experiments', 'muted'))
+        titlecol.addWidget(text('Constraint satisfaction / Search / Verified solutions', 'muted'))
         header.addLayout(titlecol); header.addStretch()
         ml.addLayout(header)
         self.pages = QStackedWidget()
         ml.addWidget(self.pages, 1)
-        self._solve_page(); self._cnf_page(); self._bench_page()
+        self._solve_page(); self._cnf_page()
         root.addWidget(main, 1)
 
     def _go(self, index):
@@ -216,9 +188,9 @@ class NQueensPage(QWidget):
         cl.addWidget(text('Solver configuration', 'section'))
         self.n = QSpinBox(); self.n.setRange(4, 256); self.n.setValue(8)
         self._control(cl, 'Board size (N)', self.n)
-        self.alg = QComboBox(); self.alg.addItems(['SAT / Glucose3', 'Min-Conflicts'])
+        self.alg = QComboBox(); self.alg.addItems(['SAT / Glucose3 - complete CSP search', 'Min-Conflicts - local search'])
         self._control(cl, 'Algorithm', self.alg)
-        self.encoding = QComboBox(); self.encoding.addItems(['pairwise', 'seqcounter', 'ladder'])
+        self.encoding = QComboBox(); self.encoding.addItems(['seqcounter', 'pairwise', 'ladder'])
         self._control(cl, 'SAT encoding', self.encoding)
         self.symmetry = QCheckBox('Break mirror symmetry'); cl.addWidget(self.symmetry)
         self.heuristic = QComboBox(); self.heuristic.addItems(['standard', 'most_conflicted'])
@@ -254,6 +226,7 @@ class NQueensPage(QWidget):
         self.pages.addWidget(page)
         self.alg.currentIndexChanged.connect(self._toggle_options)
         self._toggle_options()
+        self._solve_inputs = [self.n, self.alg, self.encoding, self.symmetry, self.heuristic, self.seed, self.steps]
 
     def _stat(self, row, title, initial, unit):
         f, box = card()
@@ -279,6 +252,7 @@ class NQueensPage(QWidget):
         self._clock_start = perf_counter()
         self._clock.start()
         self.solve_btn.setEnabled(False)
+        for control in self._solve_inputs: control.setEnabled(False)
         self.board_status.setText('Solving…')
         self._worker = SolveWorker(self.n.value(), self.alg.currentText(),
                                    self.encoding.currentText(), self.symmetry.isChecked(),
@@ -290,11 +264,13 @@ class NQueensPage(QWidget):
     def _stop(self, wall_ms=None):
         self._clock.stop(); self._clock_start = None
         self.solve_btn.setEnabled(True)
+        for control in self._solve_inputs: control.setEnabled(True)
+        self._toggle_options()
         if wall_ms is not None: self.wall.setText(f'{wall_ms:,.3f}')
 
     def _solved(self, result, wall_ms, family):
         self._stop(wall_ms)
-        n = self.n.value()
+        n = self._worker.args[0]
         queens = result.queens if result.success and verify_solution(result.queens, n) else None
         self.board.set_solution(n, queens)
         self.board_status.setText('✓ Valid solution' if queens else 'No solution found')
@@ -340,7 +316,7 @@ class NQueensPage(QWidget):
         nb.addWidget(text('CNF construction explained', 'section'))
         nb.addWidget(text('At least one in a row:  X₁₁ ∨ X₁₂ ∨ ... ∨ X₁ₙ', '', 14))
         nb.addWidget(text('At most one among attacking squares:  ¬Xᵢⱼ ∨ ¬Xₖₗ', '', 14))
-        nb.addWidget(text('For other encodings (Sequential Counter / Ladder), auxiliary variables and clause counts are generated by PySAT. Select them in Solve, or compare using Benchmark.', 'muted'))
+        nb.addWidget(text('For other encodings (Sequential Counter / Ladder), auxiliary variables and clause counts are generated by PySAT. Select them in Solve to compare formula sizes.', 'muted'))
         layout.addWidget(note); layout.addStretch()
         self.pages.addWidget(page)
         self._update_cnf()
@@ -356,73 +332,13 @@ class NQueensPage(QWidget):
                                f'Pairwise diagonal clauses: {diagonals:,}\n'
                                f'Total pairwise clauses: {total:,}')
 
-    def _bench_page(self):
-        page = QWidget(); layout = QVBoxLayout(page); layout.setContentsMargins(0,0,0,0); layout.setSpacing(14)
-        top, box = card(); box.addWidget(text('Benchmark Laboratory', 'section'))
-        box.addWidget(text('Repeated experiments on the same N values. CSV export available.', 'muted'))
-        row = QHBoxLayout()
-        row.addWidget(text('Family:'))
-        self.b_family = QComboBox(); self.b_family.addItems(['SAT', 'LOCAL']); row.addWidget(self.b_family)
-        row.addWidget(text('Trials:'))
-        self.b_trials = QSpinBox(); self.b_trials.setRange(1, 100); self.b_trials.setValue(5); row.addWidget(self.b_trials)
-        row.addWidget(text('N preset:'))
-        self.b_ns = QComboBox(); self.b_ns.addItems(['4,8,12,16', '8,20,50,100', '16,32,64']); row.addWidget(self.b_ns)
-        row.addStretch(); box.addLayout(row)
-        brow = QHBoxLayout()
-        self.b_run = QPushButton('▶   Run benchmark'); self.b_run.setObjectName('primary'); self.b_run.clicked.connect(self._run_bench)
-        self.b_export = QPushButton('Export CSV'); self.b_export.setEnabled(False); self.b_export.clicked.connect(self._export)
-        brow.addWidget(self.b_run); brow.addWidget(self.b_export); brow.addStretch(); box.addLayout(brow)
-        self.b_status = text('No experiment running.', 'muted'); box.addWidget(self.b_status)
-        layout.addWidget(top)
-        result, rb = card(); rb.addWidget(text('Experiment results', 'section'))
-        cols = ['Family', 'N', 'Method', 'Trials', 'Success', 'Variables', 'Clauses', 'Mean solve (ms)', 'Mean total (ms)', 'Median (ms)']
-        self.b_table = QTableWidget(0, len(cols)); self.b_table.setHorizontalHeaderLabels(cols)
-        self.b_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
-        self.b_table.setAlternatingRowColors(True); self.b_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        rb.addWidget(self.b_table)
-        layout.addWidget(result, 1)
-        self.pages.addWidget(page)
-
-    def _run_bench(self):
-        if self._bench_worker and self._bench_worker.isRunning(): return
-        ns = tuple(map(int, self.b_ns.currentText().split(',')))
-        self.b_run.setEnabled(False); self.b_export.setEnabled(False)
-        self.b_status.setText('Running experiments…')
-        self._bench_worker = BenchWorker(ns, self.b_trials.value(), self.b_family.currentText())
-        self._bench_worker.completed.connect(self._bench_done)
-        self._bench_worker.failed.connect(self._bench_failed)
-        self._bench_worker.start()
-
-    def _bench_done(self, rows):
-        self._bench_rows = rows
-        self.b_run.setEnabled(True); self.b_export.setEnabled(True)
-        self.b_status.setText(f'Completed {len(rows)} configurations. Results measured on this machine.')
-        self.b_table.setRowCount(len(rows))
-        for i, r in enumerate(rows):
-            vals = [r.family, str(r.n), r.method, str(r.trials), str(r.successful),
-                    str(r.variables) if r.variables is not None else 'N/A',
-                    str(r.clauses) if r.clauses is not None else 'N/A',
-                    f'{r.solve_ms:.3f}' if r.solve_ms is not None else 'N/A',
-                    f'{r.total_ms:.3f}', f'{r.median_ms:.3f}']
-            for j, val in enumerate(vals): self.b_table.setItem(i, j, QTableWidgetItem(val))
-
-    def _bench_failed(self, message):
-        self.b_run.setEnabled(True)
-        self.b_status.setText('Benchmark error: '+message)
-        QMessageBox.warning(self, 'Benchmark error', message)
-
-    def _export(self):
-        if not self._bench_rows: return
-        path, _ = QFileDialog.getSaveFileName(self, 'Save benchmark', 'nqueens_benchmark.csv', 'CSV files (*.csv)')
-        if path: export_csv(path, self._bench_rows)
-
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('N-Queens Studio | AI Game Lab')
         self.resize(1480, 900)
-        self.setMinimumSize(1120, 710)
+        self.setMinimumSize(980, 680)
         self.setCentralWidget(NQueensPage(self))
 
 

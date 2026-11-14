@@ -1,4 +1,4 @@
-# N-Queens Studio (PySide6) — study/reference project
+# N-Queens Studio (PySide6)
 
 ## Run
 
@@ -9,21 +9,20 @@ python app.py
 
 ## Structure
 
-- `app.py`: high-contrast PySide6 interface, navigation, workers, elapsed time
-- `sat.py`: CNF encoders and Glucose3 solver
-- `core.py`: Min-Conflicts + solution verifier
-- `experiments.py`: benchmark and CSV
-- `test_core.py`: independent core unit tests
+- `app.py`: N-Queens interface, chessboard, and background solver workers
+- `sat.py`: CNF encodings and complete Glucose3 SAT solver
+- `core.py`: Min-Conflicts local search and independent solution verifier
+- `test_core.py`: core unit tests
 
-## UI notes
+## Solver notes
 
-- For real SAT tests, PySAT must be installed.
-- Solver time, CNF build, solver initialization, and overall wall time are distinct measurements.
-- The timer *requests* a refresh every 8 ms; Qt does not guarantee 120 visible FPS.
-- Workers run outside the GUI thread so solving does not block interactions.
-- `NQueensPage` is a QWidget and may be inserted into the group's launcher `QStackedWidget`.
-- The chessboard directly uses QPainter rather than static images.
+- SAT/Glucose3 is complete: it returns a verified solution or proves the instance unsatisfiable.
+- Min-Conflicts follows the CSP local-search algorithm from the lecture slides. It is fast on many large boards, but has a finite step/restart limit and may not find a solution on every run.
+- The interface checks each returned placement before displaying it.
+- CNF construction, solver setup, solver time, and total wall time are reported separately.
+- Solver work runs outside the GUI thread. The chessboard is drawn with QPainter.
+- PySAT is required for SAT solving.
 
 ## Academic note
 
-The provided final-project handout prohibits use of AI tools in the submitted project. This package is educational reference material and should not be submitted as AI-generated work.
+The final-project handout in this repository states that AI tools may not be used for submitted work. Follow your instructor's rules when using this reference project.

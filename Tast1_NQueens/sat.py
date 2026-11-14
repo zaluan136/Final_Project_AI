@@ -67,23 +67,32 @@ class CNFEncoder:
                 encoding = CardEnc.atmost(lits=group, bound=1, vpool=pool, encoding=encoding_id)
                 clauses.extend(encoding.clauses)
 
-        # Exactly one queen in every row.
+        # Build all constraint scopes in one pass over the board.
+        # This avoids rescanning all N² squares for each of the O(N) diagonals.
+        rows = [[] for _ in range(n)]
+        columns = [[] for _ in range(n)]
+        diag_down = [[] for _ in range(2*n-1)]
+        diag_up = [[] for _ in range(2*n-1)]
         for r in range(n):
-            group = [square_var(n, r, c) for c in range(n)]
-            clauses.append(group)  # at least one
+            for c in range(n):
+                var = square_var(n, r, c)
+                rows[r].append(var)
+                columns[c].append(var)
+                diag_down[r-c+n-1].append(var)
+                diag_up[r+c].append(var)
+
+        # Exactly one queen per row: at least one, plus at most one.
+        for group in rows:
+            clauses.append(group)
             at_most_one(group)
 
-        # At most one per column, combined with n queens => exactly one per column.
-        for c in range(n):
-            at_most_one([square_var(n, r, c) for r in range(n)])
+        # At most one per column; N row queens then imply exactly one per column.
+        for group in columns:
+            at_most_one(group)
 
-        # Both diagonal directions. No group of length one needs an AMO clause.
-        for delta in range(-(n-1), n):
-            at_most_one([square_var(n, r, c)
-                         for r in range(n) for c in range(n) if r-c == delta])
-        for total in range(2*n-1):
-            at_most_one([square_var(n, r, c)
-                         for r in range(n) for c in range(n) if r+c == total])
+        # No two queens may share either diagonal direction.
+        for group in (*diag_down, *diag_up):
+            at_most_one(group)
 
         if self.symmetry and n >= 2:
             # Reflect columns: at least one solution has the first-row queen

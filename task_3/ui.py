@@ -96,12 +96,8 @@ class BoardView(QWidget):
                     painter.drawText(
                         rect, Qt.AlignmentFlag.AlignCenter, str(assignment[position])
                     )
-                else:
-                    domain = (
-                        self.current_event.domains[position]
-                        if self.current_event
-                        else range(1, 10)
-                    )
+                elif self.current_event is not None:
+                    domain = self.current_event.domains[position]
                     painter.setFont(QFont("Arial", max(6, int(size * 0.14))))
                     for value in domain:
                         x = (value - 1) % 3
@@ -147,6 +143,7 @@ class KakuroWidget(QWidget):
             ("1×", 400),
             ("2×", 200),
             ("4×", 100),
+            ("8×", 50),
         )
         self.speed = QSlider(Qt.Orientation.Horizontal)
         self.speed.setRange(0, len(self.speed_options) - 1)
@@ -285,6 +282,8 @@ class KakuroWidget(QWidget):
 
     def start(self):
         if not self.finished:
+            if self.board_view.current_event is None:
+                self.advance()
             self.timer.start()
             self.update_controls()
 

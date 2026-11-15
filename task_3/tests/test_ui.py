@@ -9,7 +9,7 @@ from PySide6.QtGui import QFontDatabase
 from PySide6.QtWidgets import QApplication, QWidget
 
 from task_3 import KakuroWidget
-from task_3.boards import DEMO, TASK
+from task_3.boards import EXAMPLE, COMPLEX_TEST
 from ui import set_button_icon
 from PySide6.QtWidgets import QPushButton
 
@@ -53,13 +53,24 @@ class UITests(unittest.TestCase):
         widget.run_button.click()
         widget.board_picker.setCurrentIndex(1)
         self.assertFalse(widget.timer.isActive())
-        self.assertIs(widget.solver.csp.board, TASK)
+        self.assertIs(widget.solver.csp.board, COMPLEX_TEST)
         self.assertIsNone(widget.board_view.current_event)
         self.assertEqual(widget.solver.assignment, {})
         widget.step_button.click()
         widget.reset_button.click()
         self.assertIsNone(widget.board_view.current_event)
         self.assertEqual(widget.log.toPlainText(), "")
+
+    def test_board_shows_domains_only_after_search_starts(self):
+        widget = self.widget
+        initial = widget.board_view.grab().toImage()
+        widget.step()
+        self.assertNotEqual(widget.board_view.grab().toImage(), initial)
+        widget.reset()
+        self.assertEqual(widget.board_view.grab().toImage(), initial)
+        widget.start()
+        self.assertIsNotNone(widget.board_view.current_event)
+        self.assertNotEqual(widget.board_view.grab().toImage(), initial)
 
     def test_completion_and_embedded_widget(self):
         widget = self.widget
@@ -76,7 +87,7 @@ class UITests(unittest.TestCase):
         parent = QWidget()
         embedded = KakuroWidget(parent=parent)
         self.assertIs(embedded.parent(), parent)
-        self.assertIs(embedded.solver.csp.board, DEMO)
+        self.assertIs(embedded.solver.csp.board, EXAMPLE)
         self.assertEqual(embedded.styleSheet(), "")
         parent.deleteLater()
 
@@ -117,7 +128,7 @@ class UITests(unittest.TestCase):
 
     def test_speed_and_responsive_board(self):
         widget = self.widget
-        for index, interval in enumerate((1600, 800, 400, 200, 100)):
+        for index, interval in enumerate((1600, 800, 400, 200, 100, 50)):
             widget.speed.setValue(index)
             self.assertEqual(widget.timer.interval(), interval)
             self.assertEqual(

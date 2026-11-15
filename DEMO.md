@@ -65,16 +65,16 @@ Chạy launcher bằng `python launcher.py`. Các trang Task 1, Task 2 và Task 
 
 ## 4. Task 3 - Kakuro CSP
 
-### A. Bảng Demo 5×5
+### A. Bảng Example board 5×5
 
-1. Chọn **Task 3 - Kakuro**, chọn **Demo 5×5**. Các số nhỏ trong ô trắng là domain ban đầu 1–9.
+1. Chọn **Task 3 - Kakuro**, chọn **Example board 5×5**. Các số nhỏ trong ô trắng là domain ban đầu 1–9.
 2. Chọn tốc độ 0.5× hoặc 1×; nhấn **Step** từng lần. Quan sát **Current step**, ô có viền đậm, các dãy tô xám và **History**.
 3. Khi xuất hiện `TRY`, chỉ số lớn trong ô là giá trị đã gán. Khi có `PRUNE`, chỉ các ứng viên bị loại và các số còn lại trong domain. Hai dãy ngang/dọc của ô đều phải thỏa tổng clue và không có số trùng.
 4. Nhấn **Run** để tiếp tục, **Pause** để dừng, **Reset** để bắt đầu lại. Khi hoàn tất, xem trạng thái lời giải và thống kê.
 
-### B. Bảng Assignment 9×9
+### B. Bảng Complex test board 9×9
 
-1. Chọn **Assignment 9×9**, nhấn **Run** và tăng lên 4× nếu muốn đến đoạn quay lui nhanh hơn. Nhấn **Pause** khi thấy `BACKTRACK` trong History.
+1. Chọn **Complex test board 9×9**, nhấn **Run** và tăng lên 4× nếu muốn đến đoạn quay lui nhanh hơn. Nhấn **Pause** khi thấy `Backtrack` trong History.
 2. Giải thích: MRV chọn domain nhỏ nhất; Degree phá hòa theo số hàng xóm chưa gán; LCV thử giá trị dự kiến loại ít ứng viên nhất. Forward Checking kiểm tra hàng xóm sau phép gán; Backtracking khôi phục domain và thử nhánh khác khi thất bại.
 3. Cho chạy đến **Search complete**. Nếu History đã dài, log tự giới hạn số dòng. Có thể chạy `python -m task_3.benchmark` trong terminal để kiểm tra cả hai bảng và thống kê.
 4. Nói rõ solver tìm một nghiệm hợp lệ, chưa chứng minh nghiệm duy nhất. Forward Checking hiện tại duyệt một lượt hàng xóm, không phải AC-3.

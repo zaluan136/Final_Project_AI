@@ -17,9 +17,9 @@ Giao diện dùng PySide6 Widgets với style mặc định của hệ điều h
 
 ## Cách dùng
 
-- Chọn bàn Demo 5×5 hoặc bàn chính thức 9×9.
+- Chọn bàn Example board 5×5 hoặc Complex test board 9×9.
 - **Run** phát lần lượt các sự kiện; **Pause** giữ trạng thái; **Step** xử lý một sự kiện.
-- **Speed** là thanh trượt theo năm nấc 0,25×, 0,5×, 1×, 2× và 4× (1× tương ứng 400 ms giữa các sự kiện). **Reset** hoặc đổi bàn sẽ bắt đầu một lượt giải mới.
+- **Speed** là thanh trượt theo sáu nấc 0,25×, 0,5×, 1×, 2×, 4× và 8× (1× tương ứng 400 ms giữa các sự kiện). **Reset** hoặc đổi bàn sẽ bắt đầu một lượt giải mới.
 - Số nhỏ là domain; số lớn là giá trị đã gán. Viền đậm đánh dấu ô đang xét và nền xám nhạt đánh dấu dãy liên quan.
 - Bảng bên phải cho biết số ô đã gán, sự kiện hiện tại, tổng đã gán của các dãy liên quan và thống kê. Activity log ghi ngắn gọn từng sự kiện, mới nhất ở cuối; kéo vạch giữa hai bảng để thay đổi chiều rộng. Log giữ tối đa 1.200 dòng.
 

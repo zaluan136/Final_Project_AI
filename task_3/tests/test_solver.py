@@ -4,7 +4,7 @@ import re
 import unittest
 from unittest.mock import patch
 
-from task_3.boards import BOARDS, DEMO
+from task_3.boards import BOARDS, EXAMPLE
 from task_3.model import Board, Cell, KakuroCSP
 from task_3.solver import KakuroSolver
 
@@ -101,8 +101,8 @@ class SolverTests(unittest.TestCase):
         self.assertGreater(solver.statistics.backtracks, 0)
 
     def test_empty_domain_and_impossible_clue(self):
-        solver = KakuroSolver(DEMO)
-        solver.domains[DEMO.variables[0]].clear()
+        solver = KakuroSolver(EXAMPLE)
+        solver.domains[EXAMPLE.variables[0]].clear()
         events = list(solver.events())
         self.assertEqual(events[-1].kind, "complete")
         self.assertIsNone(solver.solution)
@@ -114,14 +114,14 @@ class SolverTests(unittest.TestCase):
         self.assertEqual(solver.select_variable(), (1, 1))
         solver.domains[(2, 2)] = {4}
         self.assertEqual(solver.select_variable(), (2, 2))
-        solver = KakuroSolver(DEMO)
+        solver = KakuroSolver(EXAMPLE)
         expected = min(
-            DEMO.variables, key=lambda cell: (-len(solver.csp.neighbors[cell]), cell)
+            EXAMPLE.variables, key=lambda cell: (-len(solver.csp.neighbors[cell]), cell)
         )
         self.assertEqual(solver.select_variable(), expected)
 
     def test_lcv_does_not_mutate_state(self):
-        solver = KakuroSolver(DEMO)
+        solver = KakuroSolver(EXAMPLE)
         cell = solver.select_variable()
         original = solver.csp.initial_domains()
         values = solver.order_values(cell)

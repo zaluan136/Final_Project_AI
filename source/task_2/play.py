@@ -161,7 +161,9 @@ class Playground:
         surface = (self.small if small else self.font).render(str(text), True, color)
         self.screen.blit(surface, (x, y))
 
-    def button(self, label, rect, callback, active=False, style="neutral", enabled=True):
+    def button(
+        self, label, rect, callback, active=False, style="neutral", enabled=True
+    ):
         rect = pygame.Rect(rect)
         palettes = {
             "neutral": ((56, 69, 87), (39, 49, 65), (85, 102, 125)),
@@ -356,11 +358,21 @@ class Playground:
         if tid is None:
             raise ValueError("Select a tank first")
         current = self.mode_by_id.get(tid, MODES[-1])
-        mode = MODES[(MODES.index(current)+1) % len(MODES)] if current in MODES else MODES[0]
+        mode = (
+            MODES[(MODES.index(current) + 1) % len(MODES)]
+            if current in MODES
+            else MODES[0]
+        )
         if self.runner:
             old = self.runner.agents[tid]
-            agent = SearchAgent(self.runner.rules, tid, mode, self.number("depth"),
-                                seed=tid, use_nemesis=self.nemesis)
+            agent = SearchAgent(
+                self.runner.rules,
+                tid,
+                mode,
+                self.number("depth"),
+                seed=tid,
+                use_nemesis=self.nemesis,
+            )
             if isinstance(old, SearchAgent):
                 agent.memory = old.memory
             self.runner.agents[tid] = agent
@@ -373,14 +385,24 @@ class Playground:
 
     def draw_tank_row(self, tank, x, y, width):
         mode = self.mode_by_id.get(tank.id, MODES[-1])
-        mode_name = Path(mode[5:]).name if mode.startswith("file:") else MODE_LABELS[MODES.index(mode)]
+        mode_name = (
+            Path(mode[5:]).name
+            if mode.startswith("file:")
+            else MODE_LABELS[MODES.index(mode)]
+        )
         team = "?" if tank.team is None else "AB"[tank.team]
         switch_width = 180
-        self.button(f"T{tank.id} [{team}] HP {tank.hp} | {mode_name}",
-                    (x,y,width-switch_width-6,29),
-                    lambda tid=tank.id:setattr(self,"selected",tid), self.selected == tank.id)
-        self.button("Switch search algorithm", (x+width-switch_width,y,switch_width,29),
-                    lambda tid=tank.id:self.switch_search(tid))
+        self.button(
+            f"T{tank.id} [{team}] HP {tank.hp} | {mode_name}",
+            (x, y, width - switch_width - 6, 29),
+            lambda tid=tank.id: setattr(self, "selected", tid),
+            self.selected == tank.id,
+        )
+        self.button(
+            "Switch search algorithm",
+            (x + width - switch_width, y, switch_width, 29),
+            lambda tid=tank.id: self.switch_search(tid),
+        )
 
     def load_bot(self):
         if self.selected is None:
@@ -709,8 +731,11 @@ class Playground:
     def draw_board(self):
         s = self.state
         now = pygame.time.get_ticks()
-        self.hit_effects = {key: started for key, started in self.hit_effects.items()
-                            if now-started < 150}
+        self.hit_effects = {
+            key: started
+            for key, started in self.hit_effects.items()
+            if now - started < 150
+        }
         for y in range(s.height):
             for x in range(s.width):
                 rect = pygame.Rect(
@@ -732,14 +757,18 @@ class Playground:
 
         for wall in s.walls:
             rect = box(wall, 0)
-            self.screen.blit(self.sprite(f"wall_hp_{wall.hp}" if wall.hp < 3 else "wall", self.cell), rect)
+            self.screen.blit(
+                self.sprite(f"wall_hp_{wall.hp}" if wall.hp < 3 else "wall", self.cell),
+                rect,
+            )
             self.text(wall.hp, rect.x + 3, rect.y + 2, FG, True)
         for base in s.bases:
             if base.hp <= 0:
                 continue
             rect = box(base, 0)
-            self.draw_hit_sprite(f'base_{"ab"[base.team]}', rect, Direction.UP,
-                                 ("base",base.team), now)
+            self.draw_hit_sprite(
+                f'base_{"ab"[base.team]}', rect, Direction.UP, ("base", base.team), now
+            )
             self.draw_rect(self.screen, (20, 26, 30), (rect.x + 2, rect.y + 2, 29, 17))
             self.text(f'{"AB"[base.team]}:{base.hp}', rect.x + 3, rect.y + 2, FG, True)
         for tank in s.tanks:
@@ -747,7 +776,7 @@ class Playground:
                 continue
             rect = box(tank, 0)
             name = "tank_neutral" if tank.team is None else f'tank_{"ab"[tank.team]}'
-            self.draw_hit_sprite(name, rect, tank.direction, ("tank",tank.id), now)
+            self.draw_hit_sprite(name, rect, tank.direction, ("tank", tank.id), now)
             center = rect.center
             if tank.id == self.selected:
                 self.draw_rect(self.screen, FG, rect.inflate(8, 8), 2, border_radius=5)
@@ -793,61 +822,82 @@ class Playground:
                 )
                 self.draw_rect(self.screen, (236, 203, 94), rect, 1)
 
-
     def record_damage(self, before, after, now):
         """Visual events from committed HP differences, never simulated search."""
         for old in before.tanks:
             if after.tank(old.id).hp < old.hp:
-                self.hit_effects[("tank",old.id)] = now
-        bases = {b.team:b for b in after.bases}
+                self.hit_effects[("tank", old.id)] = now
+        bases = {b.team: b for b in after.bases}
         for old in before.bases:
             if bases[old.team].hp < old.hp:
-                self.hit_effects[("base",old.team)] = now
-        walls = {(w.x,w.y) for w in after.walls if w.hp > 0}
+                self.hit_effects[("base", old.team)] = now
+        walls = {(w.x, w.y) for w in after.walls if w.hp > 0}
         for old in before.walls:
-            if old.hp > 0 and (old.x,old.y) not in walls:
-                self.wall_breaks.append((old.x,old.y,now))
+            if old.hp > 0 and (old.x, old.y) not in walls:
+                self.wall_breaks.append((old.x, old.y, now))
         if self.runner and self.runner.rules.outcome(after) is not None:
-            self.result_ready_at = now + (270 if self.wall_breaks else 150 if self.hit_effects else 0)
+            self.result_ready_at = now + (
+                270 if self.wall_breaks else 150 if self.hit_effects else 0
+            )
 
     def draw_hit_sprite(self, name, rect, direction, key, now):
         image = self.sprite(name, self.cell, direction)
         started = self.hit_effects.get(key)
-        if started is not None and 0 <= now-started < 150:
-            cache_key = (name,self.cell,direction)
+        if started is not None and 0 <= now - started < 150:
+            cache_key = (name, self.cell, direction)
             if cache_key not in self.hit_sprites:
                 red = pygame.mask.from_surface(image).to_surface(
-                    setcolor=(255,45,45,255),unsetcolor=(0,0,0,0))
+                    setcolor=(255, 45, 45, 255), unsetcolor=(0, 0, 0, 0)
+                )
                 red.set_alpha(200)
                 tinted = image.copy()
-                tinted.blit(red,(0,0))
+                tinted.blit(red, (0, 0))
                 self.hit_sprites[cache_key] = tinted
             image = self.hit_sprites[cache_key]
-        self.screen.blit(image,rect)
+        self.screen.blit(image, rect)
 
     def draw_damage_effects(self, now):
-        self.wall_breaks = [effect for effect in self.wall_breaks if now-effect[2] < 270]
+        self.wall_breaks = [
+            effect for effect in self.wall_breaks if now - effect[2] < 270
+        ]
         clip = self.screen.get_clip()
         self.screen.set_clip(self.board)
-        for x,y,started in self.wall_breaks:
-            frame = min(5,max(0,(now-started)//45))
-            size = self.cell*2
-            self.screen.blit(self.sprite(f"wall_break_{frame}",size),
-                (self.board.x+x*self.cell-self.cell//2,
-                 self.board.y+y*self.cell-self.cell//2))
+        for x, y, started in self.wall_breaks:
+            frame = min(5, max(0, (now - started) // 45))
+            size = self.cell * 2
+            self.screen.blit(
+                self.sprite(f"wall_break_{frame}", size),
+                (
+                    self.board.x + x * self.cell - self.cell // 2,
+                    self.board.y + y * self.cell - self.cell // 2,
+                ),
+            )
         # Keep a lethal hit visible briefly before the entity disappears.
         for tank in self.state.tanks:
-            if tank.hp <= 0 and ("tank",tank.id) in self.hit_effects:
+            if tank.hp <= 0 and ("tank", tank.id) in self.hit_effects:
                 name = f'tank_{"ab"[tank.team]}'
-                rect = pygame.Rect(self.board.x+tank.x*self.cell,
-                                   self.board.y+tank.y*self.cell,self.cell,self.cell)
-                self.draw_hit_sprite(name,rect,tank.direction,("tank",tank.id),now)
+                rect = pygame.Rect(
+                    self.board.x + tank.x * self.cell,
+                    self.board.y + tank.y * self.cell,
+                    self.cell,
+                    self.cell,
+                )
+                self.draw_hit_sprite(name, rect, tank.direction, ("tank", tank.id), now)
         for base in self.state.bases:
-            if base.hp <= 0 and ("base",base.team) in self.hit_effects:
-                rect = pygame.Rect(self.board.x+base.x*self.cell,
-                                   self.board.y+base.y*self.cell,self.cell,self.cell)
-                self.draw_hit_sprite(f'base_{"ab"[base.team]}',rect,Direction.UP,
-                                     ("base",base.team),now)
+            if base.hp <= 0 and ("base", base.team) in self.hit_effects:
+                rect = pygame.Rect(
+                    self.board.x + base.x * self.cell,
+                    self.board.y + base.y * self.cell,
+                    self.cell,
+                    self.cell,
+                )
+                self.draw_hit_sprite(
+                    f'base_{"ab"[base.team]}',
+                    rect,
+                    Direction.UP,
+                    ("base", base.team),
+                    now,
+                )
         self.screen.set_clip(clip)
 
     def draw_tracers(self, now):
@@ -925,7 +975,7 @@ class Playground:
         self.button("Clear all", (x + 300, 329, 135, 36), self.clear, style="danger")
         self.text("03  TANKS & AI", x, 393, (139, 184, 230), True)
         for index, tank in enumerate(self.state.tanks):
-            self.draw_tank_row(tank, x, 425+index*34, 435)
+            self.draw_tank_row(tank, x, 425 + index * 34, 435)
         self.text("Place 2 bases; assign every tank to A or B.", x, 641, MUTED, True)
         self.text("Export saves terrain only (walls).", x, 670, MUTED, True)
         self.text("START begins the match immediately.", x, 715, FG, True)
@@ -934,17 +984,36 @@ class Playground:
         runner = self.runner
         turn = runner.state.turn if runner else 0
         limit = runner.state.max_turns if runner else (self.fields["turns"] or "-")
-        self.screen.blit(self.turn_font.render(f"TURN #{turn} / {limit}", True, FG), (265,18))
-        self.button("Take control", (20,65,140,36),
-                    lambda:self.defer(self.take_control), style="info", enabled=runner is not None)
-        self.button("Return to AI", (170,65,140,36),
-                    lambda:self.defer(lambda:self.control(None)), style="violet", enabled=runner is not None)
-        self.button("Resume" if runner and runner.paused else "Pause", (320,65,105,36),
-                    lambda:self.defer(self.pause_resume),
-                    style="primary" if runner and runner.paused else "warning", enabled=runner is not None)
-        status = ("Start a match to play" if runner is None else
-                  "Control: AI" if runner.human is None else f"Control: T{runner.human}")
-        self.text(status,445,72,MUTED,True)
+        self.screen.blit(
+            self.turn_font.render(f"TURN #{turn} / {limit}", True, FG), (265, 18)
+        )
+        self.button(
+            "Take control",
+            (20, 65, 140, 36),
+            lambda: self.defer(self.take_control),
+            style="info",
+            enabled=runner is not None,
+        )
+        self.button(
+            "Return to AI",
+            (170, 65, 140, 36),
+            lambda: self.defer(lambda: self.control(None)),
+            style="violet",
+            enabled=runner is not None,
+        )
+        self.button(
+            "Resume" if runner and runner.paused else "Pause",
+            (320, 65, 105, 36),
+            lambda: self.defer(self.pause_resume),
+            style="primary" if runner and runner.paused else "warning",
+            enabled=runner is not None,
+        )
+        status = (
+            "Start a match to play"
+            if runner is None
+            else "Control: AI" if runner.human is None else f"Control: T{runner.human}"
+        )
+        self.text(status, 445, 72, MUTED, True)
 
     def draw_panel(self):
         if not self.runner:
@@ -1012,7 +1081,7 @@ class Playground:
 
         section("03  TANKS & SEARCH", 340, 350)
         for index, tank in enumerate(self.state.tanks):
-            self.draw_tank_row(tank, x+9, 380+index*34, 415)
+            self.draw_tank_row(tank, x + 9, 380 + index * 34, 415)
         self.text(
             "Click a tank above or on the map, then click Take control.",
             x + 9,
@@ -1282,9 +1351,3 @@ if __name__ == "__main__":
         run()
     finally:
         pygame.quit()
-
-
-
-
-
-

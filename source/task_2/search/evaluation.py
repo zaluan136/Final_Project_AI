@@ -1,4 +1,5 @@
 from task_2.core.state import Base
+
 WIN_SCORE = 100_000
 from task_2.search.tactics import route, base_threats, bullet_cells
 
@@ -60,5 +61,3 @@ def evaluate(s, team):
     return max(
         -WIN_SCORE / 2, min(WIN_SCORE / 2, _score(s, team) - _score(s, 1 - team))
     )
-
-

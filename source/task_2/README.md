@@ -85,16 +85,16 @@ Các test bao gồm luật game, tranh ô/player priority, bảo vệ base cùng
 
 ## Tổ chức code
 
-| Phần | Trách nhiệm |
-|---|---|
-| `core/state.py`, `core/rules.py` | State, entity, luật và chuyển trạng thái. |
-| `search/algorithms.py`, `evaluation.py` | MAX/MIN, Alpha–Beta, cutoff, utility và heuristic. |
-| `search/tactics.py`, `agents.py` | UCS, priority và agent từng tank. |
-| `memory/memory.py` | Lịch sử thật, priority chống lặp và phạt đứng yên. |
-| `match/setup.py`, `runner.py` | Thiết lập, thu action, timer, retry và commit lượt. |
-| `play.py`, `qt_widget.py`, `scaled_canvas.py` | UI Pygame và tích hợp Qt/DPI. |
-| `asset/` | Sprite và script tạo asset. |
-| `benchmark.py` | So sánh bốn cấu hình search. |
+| Phần                                          | Trách nhiệm                                         |
+| --------------------------------------------- | --------------------------------------------------- |
+| `core/state.py`, `core/rules.py`              | State, entity, luật và chuyển trạng thái.           |
+| `search/algorithms.py`, `evaluation.py`       | MAX/MIN, Alpha–Beta, cutoff, utility và heuristic.  |
+| `search/tactics.py`, `agents.py`              | UCS, priority và agent từng tank.                   |
+| `memory/memory.py`                            | Lịch sử thật, priority chống lặp và phạt đứng yên.  |
+| `match/setup.py`, `runner.py`                 | Thiết lập, thu action, timer, retry và commit lượt. |
+| `play.py`, `qt_widget.py`, `scaled_canvas.py` | UI Pygame và tích hợp Qt/DPI.                       |
+| `asset/`                                      | Sprite và script tạo asset.                         |
+| `benchmark.py`                                | So sánh bốn cấu hình search.                        |
 
 ## Tình trạng tích hợp thuật toán ngoài
 

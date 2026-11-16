@@ -19,3 +19,4 @@ htmlcov/
 *.out
 .outside/
 *.tex
+/docs/

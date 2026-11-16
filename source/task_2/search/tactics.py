@@ -162,7 +162,3 @@ def action_priorities(state, tank_id, rules, actions):
             )
         keys[action] = (level, distance)
     return keys
-
-
-
-

@@ -21,6 +21,7 @@ class SearchConfig:
 @dataclass
 class SearchStats:
     nodes: int = 0
+    expanded_nodes: int = 0  # Nonterminal MAX/MIN calls that generate action combinations.
     cutoffs: int = 0
     chance_outcomes: int = 0
     completed_depth: int = 0
@@ -118,7 +119,11 @@ class Searcher:
             }
             value = float("-inf")
             best = None
+            expanded = False
             for action_set in choices(s, own, d):
+                if not expanded:
+                    stats.expanded_nodes += 1
+                    expanded = True
                 selected = (
                     action_set.get(tank_id, root_action)
                     if s.turn == state.turn
@@ -141,7 +146,11 @@ class Searcher:
             # Prune replies that cannot improve the result.
             check()
             value = float("inf")
+            expanded = False
             for action_set in choices(s, enemies, d):
+                if not expanded:
+                    stats.expanded_nodes += 1
+                    expanded = True
                 outcomes = self.rules.resolve(s, d, ours | action_set)
                 expectation = 0
                 for probability, next_draft in outcomes:
@@ -208,3 +217,5 @@ class Searcher:
             stats.exact_terminal_search = depth is None
         stats.elapsed_seconds = perf_counter() - start
         return result
+
+

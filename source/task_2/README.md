@@ -29,7 +29,7 @@ The supplied maps include a 1v1 and a 2v2 setup. Map symbols are `.` for empty c
 
 ## Search and benchmarks
 
-The four configurations are Minimax, Alpha-Beta, Heuristic Minimax, and Heuristic Minimax with Alpha-Beta. Search uses a time budget and can fall back to a legal action. **Compare + charts** runs shared scenarios and reports timing, search nodes, completed depth, timeouts and fallbacks. Node counts are not counts of unique states.
+The four configurations are Minimax, Alpha-Beta, Heuristic Minimax, and Heuristic Minimax with Alpha-Beta. Search uses a time budget and can fall back to a legal action. **Compare + charts** runs shared scenarios and reports timing, search nodes, completed depth, timeouts and fallbacks. Node counts are not counts of unique states. Compare can run from setup or a match snapshot. The default is 10 repetitions per algorithm. Results also report expanded MAX/MIN nodes; counters include iterative deepening and incomplete searches. Algorithm order rotates and the route cache is cleared between decisions. The benchmark does not measure win rate.
 
 ```bash
 python -m task_2.benchmark
@@ -45,3 +45,4 @@ External agents can be integrated through `match/bot_loader.py` and the `choose_
 - `match/`: match setup, runner and external bot interface.
 - `play.py` and `qt_widget.py`: Pygame interface and launcher integration.
 - `maps/` and `asset/`: maps and sprites.
+

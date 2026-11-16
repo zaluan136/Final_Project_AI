@@ -25,7 +25,9 @@ def base_threats(state, team):
         or (base.hp <= 3 and abs(t.x - base.x) + abs(t.y - base.y) <= 4)
     ]
     incoming = any(
-        first_hit(state, b.x, b.y, b.direction) == base for b in state.bullets
+        state.tank(b.owner).team != team
+        and first_hit(state, b.x, b.y, b.direction) == base
+        for b in state.bullets
     )
     return tuple(threats), incoming
 
@@ -160,3 +162,7 @@ def action_priorities(state, tank_id, rules, actions):
             )
         keys[action] = (level, distance)
     return keys
+
+
+
+

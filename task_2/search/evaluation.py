@@ -1,3 +1,4 @@
+from task_2.core.state import Base
 WIN_SCORE = 100_000
 from task_2.search.tactics import route, base_threats, bullet_cells
 
@@ -47,6 +48,8 @@ def _score(s, team):
                 score -= 8 * min(abs(t.x - e.x) + abs(t.y - e.y) for e in threats)
     for b in s.bullets:
         target = first_target(s, b.x, b.y, b.direction)
+        if isinstance(target, Base) and s.tank(b.owner).team == target.team:
+            continue
         if target is not None and getattr(target, "team", None) == team:
             distance = abs(target.x - b.x) + abs(target.y - b.y)
             score -= (180 if distance <= 3 else 50) / (target.hp + 1)
@@ -57,3 +60,5 @@ def evaluate(s, team):
     return max(
         -WIN_SCORE / 2, min(WIN_SCORE / 2, _score(s, team) - _score(s, 1 - team))
     )
+
+

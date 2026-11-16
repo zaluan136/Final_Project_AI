@@ -1,6 +1,6 @@
 from dataclasses import dataclass, replace
 from itertools import product
-from task_2.core.state import Action, Bullet, Direction
+from task_2.core.state import Action, Bullet, Direction, Base
 
 
 @dataclass(frozen=True)
@@ -59,11 +59,27 @@ class GameRules:
         occupied = {(e.x, e.y) for e in (*s.alive, *s.bases, *s.walls) if e.hp > 0}
         return dest if s.inside(*dest) and dest not in occupied else None
 
+    def can_fire(self, s, tid):
+        """The first live object on the firing ray must not be our base."""
+        tank = s.tank(tid)
+        if tank.hp <= 0:
+            return False
+        occupied = {(e.x, e.y): e for e in (*s.alive, *s.bases, *s.walls) if e.hp > 0}
+        x, y = tank.x, tank.y
+        dx, dy = tank.direction.value
+        while s.inside(x+dx, y+dy):
+            x, y = x+dx, y+dy
+            target = occupied.get((x,y))
+            if target is not None:
+                return not (isinstance(target, Base) and target.team == tank.team)
+        return True
+
     def actions(self, s, tid, draft=None):
         if s.tank(tid).hp <= 0:
             return ()
         reserved = () if draft is None else draft.reserved
-        return tuple(a for a in Action if self.destination(s, tid, a) not in reserved)
+        return tuple(a for a in Action if self.destination(s, tid, a) not in reserved
+                     and (a is not Action.FIRE or self.can_fire(s,tid)))
 
     def resolve(self, s, draft, proposals):
         if set(proposals) != set(draft.pending):
@@ -129,7 +145,7 @@ class GameRules:
             new = tuple(
                 Bullet(t.x, t.y, t.direction, t.id)
                 for t in current.alive
-                if actions[t.id] is Action.FIRE
+                if actions[t.id] is Action.FIRE and self.can_fire(current,t.id)
             )
             current = replace(current, bullets=current.bullets + new)
             for _ in range(3):
@@ -149,12 +165,16 @@ class GameRules:
         occupied = {(e.x, e.y): i for i, e in enumerate(entities) if e.hp > 0}
         damage = [0] * len(entities)
         survivors = []
+        owner_teams = {t.id: t.team for t in s.tanks}
         for b in bullets:
             i = occupied.get((b.x, b.y))
             if i is None:
                 survivors.append(b)
             else:
-                damage[i] += 1
+                target = entities[i]
+                # Friendly bases absorb the bullet, including shots already in flight.
+                if not (isinstance(target, Base) and target.team == owner_teams[b.owner]):
+                    damage[i] += 1
         updated = [
             replace(e, hp=max(0, e.hp - damage[i])) for i, e in enumerate(entities)
         ]
@@ -166,3 +186,5 @@ class GameRules:
             walls=tuple(e for e in updated[n + m :] if e.hp > 0),
             bullets=tuple(survivors),
         )
+
+

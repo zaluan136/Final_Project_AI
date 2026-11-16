@@ -1,5 +1,3 @@
-"""Reproducible benchmarks for SAT and Min-Conflicts."""
-
 from __future__ import annotations
 import csv
 from dataclasses import asdict, dataclass

@@ -233,10 +233,10 @@ class NQueensPage(QWidget):
         cr.setSpacing(14)
         statrow = QHBoxLayout()
         statrow.setSpacing(12)
-        self.wall = self._stat(statrow, "Elapsed (wall)", "—", "ms")
-        self.solve_time = self._stat(statrow, "Solver time", "—", "ms")
-        self.clauses = self._stat(statrow, "CNF clauses", "—", "")
-        self.variables = self._stat(statrow, "Variables", "—", "")
+        self.wall = self._stat(statrow, "Elapsed (wall)", "-", "ms")
+        self.solve_time = self._stat(statrow, "Solver time", "-", "ms")
+        self.clauses = self._stat(statrow, "CNF clauses", "-", "")
+        self.variables = self._stat(statrow, "Variables", "-", "")
         cr.addLayout(statrow)
         boardcard, bc = card()
         top = QHBoxLayout()
@@ -247,7 +247,9 @@ class NQueensPage(QWidget):
         bc.addLayout(top)
         self.board = Chessboard()
         bc.addWidget(self.board, 1)
-        self.details = text("Choose an algorithm and press Solve.", "muted", 11)
+        self.details = text(
+            "Choose an algorithm and press Solve N-Queens.", "muted", 11
+        )
         bc.addWidget(self.details)
         cr.addWidget(boardcard, 1)
         outer.addWidget(content, 1)
@@ -341,10 +343,10 @@ class NQueensPage(QWidget):
             return
         self._clock.stop()
         self._clock_start = None
-        self.wall.setText("—")
-        self.solve_time.setText("—")
-        self.clauses.setText("—")
-        self.variables.setText("—")
+        self.wall.setText("-")
+        self.solve_time.setText("-")
+        self.clauses.setText("-")
+        self.variables.setText("-")
         self.board.set_solution(self.n.value(), None)
         self.board_status.setText("Ready to solve")
         self.details.setText(

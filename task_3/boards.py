@@ -4,8 +4,8 @@ BLOCK = Cell("block")
 WHITE = Cell("cell")
 
 
-DEMO = Board(
-    "Demo 5×5",
+EXAMPLE = Board(
+    "Example board 5×5",
     [
         [BLOCK, BLOCK, Cell("clue", down=21), Cell("clue", down=14), BLOCK],
         [BLOCK, Cell("clue", down=14, across=12), WHITE, WHITE, Cell("clue", down=11)],
@@ -16,8 +16,8 @@ DEMO = Board(
 )
 
 
-TASK = Board(
-    "Đề chính thức 9×9",
+COMPLEX_TEST = Board(
+    "Complex test board 9×9",
     [
         [
             BLOCK,
@@ -122,4 +122,4 @@ TASK = Board(
 )
 
 
-BOARDS = (DEMO, TASK)
+BOARDS = (EXAMPLE, COMPLEX_TEST)

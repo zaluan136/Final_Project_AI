@@ -1,5 +1,3 @@
-"""Small file-based bot interface, isolated so a slow bot can be stopped."""
-
 import importlib.util
 import multiprocessing as mp
 from pathlib import Path

@@ -1,5 +1,3 @@
-"""N-Queens: board verification and Min-Conflicts (educational reference)."""
-
 from __future__ import annotations
 from dataclasses import dataclass
 import random
@@ -7,7 +5,6 @@ from time import perf_counter
 
 
 def verify_solution(queens: list[int] | None, n: int) -> bool:
-    """Queens indexed by column; value is the queen's row."""
     if (
         queens is None
         or len(queens) != n
@@ -32,7 +29,6 @@ class LocalResult:
 
 
 class MinConflictsSolver:
-    """A queen in every column. Row and diagonal counts maintained incrementally."""
 
     def __init__(
         self,

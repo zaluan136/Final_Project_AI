@@ -1,10 +1,14 @@
-# Introduction to Artificial Intelligence — Final Project
+# Introduction to Artificial Intelligence - Final Project
 
 Đồ án gồm ba bài toán AI, có thể chạy riêng hoặc mở từ launcher chung:
 
-- [Task 1 — N-Queens](task_1/README.md): giải và hiển thị bài toán N quân hậu bằng SAT hoặc Min-Conflicts.
-- [Task 2 — Tank Battle](task_2/README.md): mô phỏng trận đấu xe tăng với các thuật toán tìm kiếm; giao diện dùng Pygame.
-- [Task 3 — Kakuro CSP](task_3/README.md): minh họa quá trình giải Kakuro bằng Backtracking, Forward Checking, MRV, Degree và LCV.
+Xem [hướng dẫn demo từng bước](DEMO.md) để chuẩn bị và trình bày cả ba task.
+Xem [đối chiếu code với đề](AUDIT.md) để biết kết quả kiểm tra và giới hạn.
+Xem [kiến thức và luồng hoạt động](docs/KIEN_THUC_VA_LUONG.md) để đọc code và chuẩn bị nội dung báo cáo.
+
+- [Task 1 - N-Queens](task_1/README.md): giải và hiển thị bài toán N quân hậu bằng SAT hoặc Min-Conflicts.
+- [Task 2 - Tank Battle](task_2/README.md): mô phỏng trận đấu xe tăng với các thuật toán tìm kiếm; giao diện dùng Pygame.
+- [Task 3 - Kakuro CSP](task_3/README.md): minh họa quá trình giải Kakuro bằng Backtracking, Forward Checking, MRV, Degree và LCV.
 
 ## Cài đặt
 

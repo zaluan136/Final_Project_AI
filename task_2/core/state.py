@@ -1,5 +1,3 @@
-"""Immutable snapshots; team 0/1, neutral tanks allowed only in setup."""
-
 from dataclasses import dataclass
 from enum import Enum
 

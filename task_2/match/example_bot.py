@@ -1,5 +1,3 @@
-"""Example plugin: select this file for a tank in the temporary UI."""
-
 from task_2.core.rules import GameRules
 from task_2.search.algorithms import predicted_action
 

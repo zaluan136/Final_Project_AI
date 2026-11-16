@@ -1,9 +1,3 @@
-"""Headless coordinator: shared AI budget, human input, pause, retries.
-Calls are synchronous and bounded cooperatively for built-in agents. play.py
-calls collect() in a worker; bot_loader.py isolates external bots in processes.
-The shared match deadline remains a soft wall-clock budget.
-"""
-
 from dataclasses import dataclass
 from random import Random
 from time import perf_counter
@@ -99,9 +93,7 @@ class MatchRunner:
         self.proposals[self.human] = action
 
     def _observation(self):
-        # Do not expose accepted FIRE/STAY/blocked-turn intent to retry agents.
-        # Reserved movements are revealed by conflict resolution. Unknown
-        # accepted nonmoves are approximated as STAY in their search model.
+        # Hide accepted non-movement actions from retry agents.
         accepted = tuple(
             (
                 tid,
@@ -116,7 +108,6 @@ class MatchRunner:
         return Draft(accepted, self.draft.reserved, self.draft.pending)
 
     def collect(self):
-        """Collect/resolve; stop for human retry or return ready. Never executes."""
         if self.paused or self.rules.outcome(self.state) is not None:
             return
         while self.draft.pending:
@@ -129,8 +120,7 @@ class MatchRunner:
                 for i in self.draft.pending
                 if i != self.human and i not in self.proposals
             ]
-            # Rotate allocation order, not movement rights. Fairness of cell
-            # lotteries is independent of this scheduling choice.
+            # Rotate the order in which agents receive time.
             if ids:
                 offset = self.state.turn % len(ids)
                 ids = ids[offset:] + ids[:offset]
@@ -203,8 +193,7 @@ class MatchRunner:
         before = self.state
         self.state = self.rules.execute(self.state, self.draft)
         for tid, action in self.last_actions.items():
-            # Only the built-in agent has this memory contract. Never invoke
-            # arbitrary external hooks from the UI/physics thread.
+            # Only built-in agents keep movement history.
             if isinstance(self.agents[tid], SearchAgent):
                 self.agents[tid].observe_turn(before, action, self.state)
         self.last_ai_spent_ms = self.ai_spent_ms

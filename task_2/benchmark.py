@@ -1,5 +1,3 @@
-"""Small reproducible comparisons; results stay in memory/stdout by default."""
-
 import sys
 from pathlib import Path
 
@@ -32,8 +30,7 @@ class Comparison:
 
 
 def endgames():
-    # Same states for all modes, no nemesis. Natural final-turn rule keeps
-    # terminal-only minimax measurable; no artificial zero-valued cutoff.
+    # One-turn scenarios allow terminal-only search to finish.
     return [
         GameState(
             7,
@@ -54,11 +51,6 @@ def endgames():
 
 
 def compare(state=None, budget_ms=150, depth=3, repeats=3, cancel_event=None):
-    """Fixed one-turn endgames + same budget per sampled tank decision.
-
-    The timed suite is a search microbenchmark, not the shared multi-agent
-    match budget or a win-rate tournament. Timed-out samples remain in stats.
-    """
     cancel_event = cancel_event or Event()
     rules = GameRules()
     current = state or replace(endgames()[0], max_turns=300)
@@ -70,8 +62,7 @@ def compare(state=None, budget_ms=150, depth=3, repeats=3, cancel_event=None):
                 for scenario in scenarios:
                     if cancel_event.is_set():
                         return rows
-                    # Single fixed horizon when comparing algorithms. Under a
-                    # deadline use iterative deepening for usable partial work.
+                    # Use iterative deepening in the timed suite.
                     config = SearchConfig(
                         1 if suite == "terminal" else depth,
                         alpha_beta,

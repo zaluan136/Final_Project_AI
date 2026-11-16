@@ -1,5 +1,3 @@
-"""Simultaneous turns with explicit uniform lotteries and retry rounds."""
-
 from dataclasses import dataclass, replace
 from itertools import product
 from task_2.core.state import Action, Bullet, Direction, Base
@@ -26,6 +24,7 @@ class GameRules:
         lost = [
             not any(b.team == team and b.hp > 0 for b in s.bases)
             or not any(t.team == team and t.hp > 0 for t in s.tanks)
+            or any(t.team == team and t.hp <= 0 for t in s.tanks)
             for team in (0, 1)
         ]
         if all(lost):
@@ -35,7 +34,7 @@ class GameRules:
             reason = (
                 "base_destroyed"
                 if any(b.team == loser and b.hp == 0 for b in s.bases)
-                else "all_tanks_destroyed"
+                else "tank_destroyed"
             )
             return Outcome(1 - loser, reason)
         if check_limit and s.turn >= s.max_turns:

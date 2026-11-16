@@ -1,9 +1,3 @@
-"""Propositional N-Queens encoding using python-sat's Glucose3 and CardEnc.
-
-Every physical square is represented by one propositional variable.
-At-most-one groups are encoded with the selected cardinality encoding.
-"""
-
 from __future__ import annotations
 from dataclasses import dataclass
 from time import perf_counter

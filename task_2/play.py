@@ -1,8 +1,3 @@
-"""Pygame playground. Run: python -m task_2.
-
-The engine stays independent of pygame.
-"""
-
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
@@ -105,7 +100,9 @@ class Playground:
             if scale is None:
                 return pygame.font.SysFont("segoeui", size, bold=bold)
             from .scaled_canvas import ScaledFont
+
             return ScaledFont(size, bold, scale)
+
         self.font = make_font(18, False)
         self.small = make_font(15, False)
         self.action_font = make_font(16, True)
@@ -136,7 +133,11 @@ class Playground:
         state = self.state
         width = 690 if self.panel_open else self.screen.get_width() - 40
         top = 120 if self.runner else 75
-        height = (550 if self.panel_open else 650) if self.runner else (610 if self.panel_open else self.screen.get_height() - 130)
+        height = (
+            (550 if self.panel_open else 650)
+            if self.runner
+            else (610 if self.panel_open else self.screen.get_height() - 130)
+        )
         limit = 52 if self.panel_open else max(width, height)
         self.cell = max(1, min(limit, width // state.width, height // state.height))
         self.board = pygame.Rect(
@@ -219,7 +220,6 @@ class Playground:
         self.field_rects[name] = rect
 
     def defer(self, action):
-        """Pause/handoff at worker boundary; never mutate a busy runner."""
         if self.future is not None:
             self.after_job = action
             if self.runner:
@@ -263,7 +263,7 @@ class Playground:
             player_priority_enabled=self.player_priority,
         )
         self.runner.resume()
-        self.message = "Match started. Select a tank and Take control to play."
+        self.message = "Match started. Select a tank and click Take control to play."
         self.single_step = False
         self.geometry()
 
@@ -373,7 +373,6 @@ class Playground:
         self.message = f"T{self.selected}: external bot {path.name}"
 
     def choose_file(self, save=False, bot=False):
-        """Native picker on the UI thread; cancelling leaves the setup intact."""
         import tkinter as tk
         from tkinter import filedialog
 
@@ -544,8 +543,7 @@ class Playground:
             now = pygame.time.get_ticks()
             self.record_damage(before, runner.state, now)
             self.fire_effects = [(x, y, direction, now) for x, y, direction in firing]
-            # Bullets advance up to three cells in execute(). Mark the end of
-            # that travel, including shots absorbed by an entity or the edge.
+            # Show where each bullet stopped during this turn.
             occupied = {
                 (e.x, e.y)
                 for e in (*before.tanks, *before.bases, *before.walls)
@@ -831,7 +829,6 @@ class Playground:
         self.screen.set_clip(clip)
 
     def draw_tracers(self, now):
-        """One short moving arrow per shot; fade completely within 180 ms."""
         self.bullet_fades = [e for e in self.bullet_fades if now - e[5] < 180]
         previous_clip = self.screen.get_clip()
         self.screen.set_clip(self.board)
@@ -856,54 +853,108 @@ class Playground:
         self.button("Hide panel", (1050, 16, 130, 32), self.toggle_panel)
         self.text("01  MATCH SETTINGS", x, 60, (139, 184, 230), True)
         self.field("turns", "Max turns", (x, 105, 95, 32))
-        self.field("budget", "AI budget (ms)", (x+110, 105, 130, 32))
-        self.field("depth", "Depth", (x+255, 105, 70, 32))
-        self.field("delay", "Delay ms", (x+340, 105, 95, 32))
-        self.button(f'Timer: {"ON" if self.limit else "OFF"}', (x, 148, 130, 30),
-                    lambda: setattr(self, "limit", not self.limit), self.limit)
-        self.button(f'Nemesis: {"ON" if self.nemesis else "OFF"}', (x+140, 148, 145, 30),
-                    self.toggle_nemesis, self.nemesis)
-        self.button(f'Player first: {"ON" if self.player_priority else "OFF"}', (x+295, 148, 140, 30),
-                    lambda: self.defer(self.toggle_player_priority), self.player_priority)
+        self.field("budget", "AI budget (ms)", (x + 110, 105, 130, 32))
+        self.field("depth", "Depth", (x + 255, 105, 70, 32))
+        self.field("delay", "Delay ms", (x + 340, 105, 95, 32))
+        self.button(
+            f'Timer: {"ON" if self.limit else "OFF"}',
+            (x, 148, 130, 30),
+            lambda: setattr(self, "limit", not self.limit),
+            self.limit,
+        )
+        self.button(
+            f'Nemesis: {"ON" if self.nemesis else "OFF"}',
+            (x + 140, 148, 145, 30),
+            self.toggle_nemesis,
+            self.nemesis,
+        )
+        self.button(
+            f'Player first: {"ON" if self.player_priority else "OFF"}',
+            (x + 295, 148, 140, 30),
+            lambda: self.defer(self.toggle_player_priority),
+            self.player_priority,
+        )
         self.text("02  MAP & PLACEMENT", x, 204, (139, 184, 230), True)
-        tools = [("Select","select"),("Base","base"),("Tank","tank"),("Wall","wall"),("Erase","erase")]
-        for index,(title,tool) in enumerate(tools):
-            self.button(title, (x+index*88, 235, 82, 32),
-                        lambda t=tool:self.set_tool(t), self.tool == tool)
-        self.button("Assign A", (x, 279, 100, 32), lambda:self.assign(0))
-        self.button("Assign B", (x+110, 279, 100, 32), lambda:self.assign(1))
-        self.button("Rotate", (x+220, 279, 100, 32), self.rotate)
-        self.button("START", (x+330, 275, 105, 40), self.start, style="primary")
+        tools = [
+            ("Select", "select"),
+            ("Base", "base"),
+            ("Tank", "tank"),
+            ("Wall", "wall"),
+            ("Erase", "erase"),
+        ]
+        for index, (title, tool) in enumerate(tools):
+            self.button(
+                title,
+                (x + index * 88, 235, 82, 32),
+                lambda t=tool: self.set_tool(t),
+                self.tool == tool,
+            )
+        self.button("Assign A", (x, 279, 100, 32), lambda: self.assign(0))
+        self.button("Assign B", (x + 110, 279, 100, 32), lambda: self.assign(1))
+        self.button("Rotate", (x + 220, 279, 100, 32), self.rotate)
+        self.button("START", (x + 330, 275, 105, 40), self.start, style="primary")
         self.button("Load map...", (x, 329, 140, 36), self.load_terrain, style="info")
-        self.button("Export map...", (x+150, 329, 140, 36), self.export_terrain, style="violet")
-        self.button("Clear all", (x+300, 329, 135, 36), self.clear, style="danger")
+        self.button(
+            "Export map...",
+            (x + 150, 329, 140, 36),
+            self.export_terrain,
+            style="violet",
+        )
+        self.button("Clear all", (x + 300, 329, 135, 36), self.clear, style="danger")
         self.text("03  TANKS & AI", x, 393, (139, 184, 230), True)
-        for index,tank in enumerate(self.state.tanks):
+        for index, tank in enumerate(self.state.tanks):
             mode = self.mode_by_id.get(tank.id, MODES[-1])
-            mode_name = Path(mode[5:]).name if mode.startswith("file:") else MODE_LABELS[MODES.index(mode)]
+            mode_name = (
+                Path(mode[5:]).name
+                if mode.startswith("file:")
+                else MODE_LABELS[MODES.index(mode)]
+            )
             team = "?" if tank.team is None else "AB"[tank.team]
-            self.button(f"T{tank.id} [{team}] HP {tank.hp} | {mode_name}",
-                        (x, 425+index*34, 435, 29),
-                        lambda tid=tank.id:setattr(self, "selected", tid), self.selected == tank.id)
+            self.button(
+                f"T{tank.id} [{team}] HP {tank.hp} | {mode_name}",
+                (x, 425 + index * 34, 435, 29),
+                lambda tid=tank.id: setattr(self, "selected", tid),
+                self.selected == tank.id,
+            )
         self.button("Cycle selected AI", (x, 575, 205, 34), self.cycle_mode)
-        self.button("Load .py for tank", (x+215, 575, 220, 34), self.load_bot)
+        self.button("Load .py for tank", (x + 215, 575, 220, 34), self.load_bot)
         self.text("Place 2 bases; assign every tank to A or B.", x, 641, MUTED, True)
         self.text("Export saves terrain only (walls).", x, 670, MUTED, True)
         self.text("START begins the match immediately.", x, 715, FG, True)
 
     def draw_match_hud(self):
         runner = self.runner
-        self.screen.blit(self.turn_font.render(
-            f"TURN #{self.state.turn} / {self.state.max_turns}", True, FG), (265, 18))
-        self.button("Take control", (20, 65, 140, 36),
-                    lambda: self.defer(self.take_control), style="info")
-        self.button("Return to AI", (170, 65, 140, 36),
-                    lambda: self.defer(lambda: self.control(None)), style="violet")
-        self.button("Resume" if runner.paused else "Pause", (320, 65, 105, 36),
-                    lambda: self.defer(self.pause_resume),
-                    style="primary" if runner.paused else "warning")
-        self.text("Control: AI" if runner.human is None else f"Control: T{runner.human}",
-                  445, 72, MUTED, True)
+        self.screen.blit(
+            self.turn_font.render(
+                f"TURN #{self.state.turn} / {self.state.max_turns}", True, FG
+            ),
+            (265, 18),
+        )
+        self.button(
+            "Take control",
+            (20, 65, 140, 36),
+            lambda: self.defer(self.take_control),
+            style="info",
+        )
+        self.button(
+            "Return to AI",
+            (170, 65, 140, 36),
+            lambda: self.defer(lambda: self.control(None)),
+            style="violet",
+        )
+        self.button(
+            "Resume" if runner.paused else "Pause",
+            (320, 65, 105, 36),
+            lambda: self.defer(self.pause_resume),
+            style="primary" if runner.paused else "warning",
+        )
+        self.text(
+            "Control: AI" if runner.human is None else f"Control: T{runner.human}",
+            445,
+            72,
+            MUTED,
+            True,
+        )
 
     def draw_panel(self):
         if not self.runner:
@@ -917,91 +968,162 @@ class Playground:
         self.button("Hide panel", (1050, 16, 130, 32), self.toggle_panel)
 
         def section(title, y, height):
-            self.draw_rect(self.screen, (24, 32, 45), (x-4, y, 443, height), border_radius=9)
-            self.text(title, x+9, y+10, (139, 184, 230), True)
+            self.draw_rect(
+                self.screen, (24, 32, 45), (x - 4, y, 443, height), border_radius=9
+            )
+            self.text(title, x + 9, y + 10, (139, 184, 230), True)
 
         section("01  MATCH SETTINGS", 60, 132)
-        self.field("budget", "AI budget / turn (ms)", (x+9, 113, 175, 30))
-        self.field("depth", "Depth", (x+194, 113, 105, 30))
-        self.field("delay", "Turn delay", (x+309, 113, 115, 30))
-        self.button(f'Timer: {"ON" if self.limit else "OFF"}', (x+9, 153, 112, 28),
-                    lambda: setattr(self, "limit", not self.limit), self.limit)
-        self.button(f'Nemesis: {"ON" if self.nemesis else "OFF"}', (x+131, 153, 143, 28),
-                    self.toggle_nemesis, self.nemesis)
-        self.button(f'Player first: {"ON" if self.player_priority else "OFF"}',
-                    (x+284, 153, 140, 28),
-                    lambda: self.defer(self.toggle_player_priority), self.player_priority)
+        self.field("budget", "AI budget / turn (ms)", (x + 9, 113, 175, 30))
+        self.field("depth", "Depth", (x + 194, 113, 105, 30))
+        self.field("delay", "Turn delay", (x + 309, 113, 115, 30))
+        self.button(
+            f'Timer: {"ON" if self.limit else "OFF"}',
+            (x + 9, 153, 112, 28),
+            lambda: setattr(self, "limit", not self.limit),
+            self.limit,
+        )
+        self.button(
+            f'Nemesis: {"ON" if self.nemesis else "OFF"}',
+            (x + 131, 153, 143, 28),
+            self.toggle_nemesis,
+            self.nemesis,
+        )
+        self.button(
+            f'Player first: {"ON" if self.player_priority else "OFF"}',
+            (x + 284, 153, 140, 28),
+            lambda: self.defer(self.toggle_player_priority),
+            self.player_priority,
+        )
 
         section("02  MATCH ACTIONS", 205, 122)
-        self.button("One turn", (x+9, 246, 112, 32), lambda: self.defer(self.step))
-        self.button("Reset match", (x+131, 246, 143, 32),
-                    lambda: self.defer(self.reset_match), style="warning")
-        self.button("Back to setup", (x+284, 246, 140, 32),
-                    lambda: self.defer(self.reset), style="violet")
-        self.button("Apply timer / budget", (x+9, 288, 220, 28),
-                    lambda: self.defer(self.apply_budget), style="info")
-        self.text(f"AI: {self.runner.last_ai_spent_ms:.1f} ms", x+244, 294, MUTED, True)
+        self.button("One turn", (x + 9, 246, 112, 32), lambda: self.defer(self.step))
+        self.button(
+            "Reset match",
+            (x + 131, 246, 143, 32),
+            lambda: self.defer(self.reset_match),
+            style="warning",
+        )
+        self.button(
+            "Back to setup",
+            (x + 284, 246, 140, 32),
+            lambda: self.defer(self.reset),
+            style="violet",
+        )
+        self.button(
+            "Apply timer / budget",
+            (x + 9, 288, 220, 28),
+            lambda: self.defer(self.apply_budget),
+            style="info",
+        )
+        self.text(
+            f"AI: {self.runner.last_ai_spent_ms:.1f} ms", x + 244, 294, MUTED, True
+        )
 
         section("03  TANKS & SEARCH", 340, 350)
         for index, tank in enumerate(self.state.tanks):
             mode = self.mode_by_id.get(tank.id, MODES[-1])
-            mode_name = Path(mode[5:]).name if mode.startswith("file:") else MODE_LABELS[MODES.index(mode)]
+            mode_name = (
+                Path(mode[5:]).name
+                if mode.startswith("file:")
+                else MODE_LABELS[MODES.index(mode)]
+            )
             team = "?" if tank.team is None else "AB"[tank.team]
-            self.button(f"T{tank.id} [{team}]  HP {tank.hp} | {mode_name}",
-                        (x+9, 380+index*34, 415, 29),
-                        lambda tid=tank.id: setattr(self, "selected", tid), self.selected == tank.id)
-        self.text("Click a tank above or on the map, then Take control.", x+9, 526, MUTED, True)
+            self.button(
+                f"T{tank.id} [{team}]  HP {tank.hp} | {mode_name}",
+                (x + 9, 380 + index * 34, 415, 29),
+                lambda tid=tank.id: setattr(self, "selected", tid),
+                self.selected == tank.id,
+            )
+        self.text(
+            "Click a tank above or on the map, then click Take control.",
+            x + 9,
+            526,
+            MUTED,
+            True,
+        )
         if self.selected is not None:
             agent = self.runner.agents.get(self.selected)
             result = getattr(agent, "last_result", None)
             action = self.runner.last_actions.get(self.selected)
-            self.text(f"T{self.selected} action: {action.name if action else '-'}", x+9, 556, FG, True)
+            self.text(
+                f"T{self.selected} action: {action.name if action else '-'}",
+                x + 9,
+                556,
+                FG,
+                True,
+            )
             if result:
                 stats = result.stats
-                self.text(f"Depth {stats.completed_depth} | Nodes {stats.nodes}", x+9, 583, MUTED, True)
-                self.text(f"Timeout: {stats.timed_out}", x+9, 607, MUTED, True)
-        self.button("Compare + charts", (x+9, 643, 415, 34),
-                    lambda: self.defer(self.benchmark), style="info")
+                self.text(
+                    f"Depth {stats.completed_depth} | Nodes {stats.nodes}",
+                    x + 9,
+                    583,
+                    MUTED,
+                    True,
+                )
+                self.text(f"Timeout: {stats.timed_out}", x + 9, 607, MUTED, True)
+        self.button(
+            "Compare + charts",
+            (x + 9, 643, 415, 34),
+            lambda: self.defer(self.benchmark),
+            style="info",
+        )
         self.text("WASD/arrows: move | Space: fire | X: stay", x, 714, MUTED, True)
         self.text("P: pause/resume | Esc: pause", x, 742, MUTED, True)
 
     def draw_result(self, outcome):
         # Snapshot in logical coordinates also works with the high-DPI Qt canvas.
         native = self.screen.surface if hasattr(self.screen, "surface") else self.screen
-        snapshot = pygame.transform.scale(native, CANVAS_SIZE).subsurface(self.board).copy()
-        tiny = pygame.transform.smoothscale(snapshot,
-            (max(1, self.board.width//12), max(1, self.board.height//12)))
+        snapshot = (
+            pygame.transform.scale(native, CANVAS_SIZE).subsurface(self.board).copy()
+        )
+        tiny = pygame.transform.smoothscale(
+            snapshot, (max(1, self.board.width // 12), max(1, self.board.height // 12))
+        )
         blurred = pygame.transform.smoothscale(tiny, self.board.size)
         shade = pygame.Surface(self.board.size, pygame.SRCALPHA)
         shade.fill((7, 12, 22, 185))
         blurred.blit(shade, (0, 0))
         self.screen.blit(blurred, self.board)
-        card = pygame.Rect(0, 0, min(540, self.board.width-20), 265)
+        card = pygame.Rect(0, 0, min(540, self.board.width - 20), 265)
         card.center = self.board.center
         self.draw_rect(self.screen, (25, 35, 51), card, border_radius=16)
         winner = outcome.winner
         headline = "DRAW" if winner is None else f"TEAM {'AB'[winner]} WINS"
         color = (238, 205, 127) if winner is None else COLORS[winner]
         heading = self.result_font.render(headline, True, color)
-        self.screen.blit(heading, heading.get_rect(center=(card.centerx, card.y+58)))
-        reason = {"base_destroyed": "Base destroyed",
-                  "all_tanks_destroyed": "All opposing tanks destroyed",
-                  "turn_limit": "Turn limit reached",
-                  "mutual_destruction": "Both teams destroyed"}.get(outcome.reason, "Match finished")
+        self.screen.blit(heading, heading.get_rect(center=(card.centerx, card.y + 58)))
+        reason = {
+            "base_destroyed": "Base destroyed",
+            "tank_destroyed": "A tank was destroyed",
+            "turn_limit": "Turn limit reached",
+            "mutual_destruction": "Both teams destroyed",
+        }.get(outcome.reason, "Match finished")
         detail = self.small.render(reason, True, MUTED)
-        self.screen.blit(detail, detail.get_rect(center=(card.centerx, card.y+110)))
+        self.screen.blit(detail, detail.get_rect(center=(card.centerx, card.y + 110)))
         if self.runner.human is not None and winner is not None:
             team = self.state.tank(self.runner.human).team
-            text = self.action_font.render("VICTORY" if team == winner else "DEFEAT", True, FG)
-            self.screen.blit(text, text.get_rect(center=(card.centerx, card.y+150)))
+            text = self.action_font.render(
+                "VICTORY" if team == winner else "DEFEAT", True, FG
+            )
+            self.screen.blit(text, text.get_rect(center=(card.centerx, card.y + 150)))
         # The result card is modal: clicks cannot activate controls underneath.
         self.buttons = []
         self.field_rects = {}
-        width = (card.width-60)//2
-        self.button("Play again", (card.x+20, card.bottom-66, width, 40),
-                    lambda: self.defer(self.reset_match), style="primary")
-        self.button("Back to setup", (card.x+40+width, card.bottom-66, width, 40),
-                    lambda: self.defer(self.reset), style="violet")
+        width = (card.width - 60) // 2
+        self.button(
+            "Play again",
+            (card.x + 20, card.bottom - 66, width, 40),
+            lambda: self.defer(self.reset_match),
+            style="primary",
+        )
+        self.button(
+            "Back to setup",
+            (card.x + 40 + width, card.bottom - 66, width, 40),
+            lambda: self.defer(self.reset),
+            style="violet",
+        )
 
     def toggle_player_priority(self):
         self.player_priority = not self.player_priority
@@ -1166,7 +1288,6 @@ def enable_windows_dpi_awareness():
 
 
 def run(screen=None, clock=None):
-    """Launcher entry: returns without quitting the launcher's pygame instance."""
     if screen is None and not pygame.display.get_init():
         enable_windows_dpi_awareness()
     pygame.init()
@@ -1184,7 +1305,5 @@ if __name__ == "__main__":
         run()
     finally:
         pygame.quit()
-
-
 
 

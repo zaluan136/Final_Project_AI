@@ -1,5 +1,3 @@
-"""Generate the 32 px pixel-art sprites used by the playground."""
-
 from pathlib import Path
 import sys
 from PIL import Image, ImageDraw
@@ -76,7 +74,6 @@ def flash(d, frame):
 
 
 def tracer(d, frame):
-    """Up-facing dash/arrow stages on a transparent 32 px canvas."""
     length = (18, 11, 5)[frame]
     d.line((16, 9, 16, 9 + length), fill=(255, 180, 70, 190), width=3)
     d.line((16, 8, 16, 9 + length), fill=(255, 246, 190, 255), width=1)

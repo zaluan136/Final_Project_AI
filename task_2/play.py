@@ -60,6 +60,10 @@ class Playground:
         self.scaled_sprites = {}
         self.fire_effects = []
         self.bullet_fades = []
+        self.hit_effects = {}
+        self.wall_breaks = []
+        self.hit_sprites = {}
+        self.result_ready_at = 0
         self.panel_open = True
         self.match_initial_state = None
         self.executor = ThreadPoolExecutor(max_workers=1)
@@ -233,6 +237,9 @@ class Playground:
     def new_match(self, state):
         self.fire_effects.clear()
         self.bullet_fades.clear()
+        self.hit_effects.clear()
+        self.wall_breaks.clear()
+        self.result_ready_at = 0
         rules = GameRules()
         agents = {}
         for tank in state.tanks:
@@ -278,6 +285,9 @@ class Playground:
         self.match_initial_state = None
         self.fire_effects.clear()
         self.bullet_fades.clear()
+        self.hit_effects.clear()
+        self.wall_breaks.clear()
+        self.result_ready_at = 0
         self.selected = None
         self.overlay = False
         self.single_step = False
@@ -532,6 +542,7 @@ class Playground:
             ]
             runner.commit()
             now = pygame.time.get_ticks()
+            self.record_damage(before, runner.state, now)
             self.fire_effects = [(x, y, direction, now) for x, y, direction in firing]
             # Bullets advance up to three cells in execute(). Mark the end of
             # that travel, including shots absorbed by an entity or the edge.
@@ -677,6 +688,9 @@ class Playground:
 
     def draw_board(self):
         s = self.state
+        now = pygame.time.get_ticks()
+        self.hit_effects = {key: started for key, started in self.hit_effects.items()
+                            if now-started < 150}
         for y in range(s.height):
             for x in range(s.width):
                 rect = pygame.Rect(
@@ -698,13 +712,14 @@ class Playground:
 
         for wall in s.walls:
             rect = box(wall, 0)
-            self.screen.blit(self.sprite("wall", self.cell), rect)
+            self.screen.blit(self.sprite(f"wall_hp_{wall.hp}" if wall.hp < 3 else "wall", self.cell), rect)
             self.text(wall.hp, rect.x + 3, rect.y + 2, FG, True)
         for base in s.bases:
             if base.hp <= 0:
                 continue
             rect = box(base, 0)
-            self.screen.blit(self.sprite(f'base_{"ab"[base.team]}', self.cell), rect)
+            self.draw_hit_sprite(f'base_{"ab"[base.team]}', rect, Direction.UP,
+                                 ("base",base.team), now)
             self.draw_rect(self.screen, (20, 26, 30), (rect.x + 2, rect.y + 2, 29, 17))
             self.text(f'{"AB"[base.team]}:{base.hp}', rect.x + 3, rect.y + 2, FG, True)
         for tank in s.tanks:
@@ -712,7 +727,7 @@ class Playground:
                 continue
             rect = box(tank, 0)
             name = "tank_neutral" if tank.team is None else f'tank_{"ab"[tank.team]}'
-            self.screen.blit(self.sprite(name, self.cell, tank.direction), rect)
+            self.draw_hit_sprite(name, rect, tank.direction, ("tank",tank.id), now)
             center = rect.center
             if tank.id == self.selected:
                 self.draw_rect(self.screen, FG, rect.inflate(8, 8), 2, border_radius=5)
@@ -747,6 +762,7 @@ class Playground:
                 self.sprite(f"fire_{frame}", self.cell, direction), (px, py)
             )
         self.draw_tracers(now)
+        self.draw_damage_effects(now)
         if self.runner:
             for x, y in self.runner.draft.reserved:
                 rect = pygame.Rect(
@@ -756,6 +772,63 @@ class Playground:
                     self.cell - 4,
                 )
                 self.draw_rect(self.screen, (236, 203, 94), rect, 1)
+
+
+    def record_damage(self, before, after, now):
+        """Visual events from committed HP differences, never simulated search."""
+        for old in before.tanks:
+            if after.tank(old.id).hp < old.hp:
+                self.hit_effects[("tank",old.id)] = now
+        bases = {b.team:b for b in after.bases}
+        for old in before.bases:
+            if bases[old.team].hp < old.hp:
+                self.hit_effects[("base",old.team)] = now
+        walls = {(w.x,w.y) for w in after.walls if w.hp > 0}
+        for old in before.walls:
+            if old.hp > 0 and (old.x,old.y) not in walls:
+                self.wall_breaks.append((old.x,old.y,now))
+        if self.runner and self.runner.rules.outcome(after) is not None:
+            self.result_ready_at = now + (270 if self.wall_breaks else 150 if self.hit_effects else 0)
+
+    def draw_hit_sprite(self, name, rect, direction, key, now):
+        image = self.sprite(name, self.cell, direction)
+        started = self.hit_effects.get(key)
+        if started is not None and 0 <= now-started < 150:
+            cache_key = (name,self.cell,direction)
+            if cache_key not in self.hit_sprites:
+                red = pygame.mask.from_surface(image).to_surface(
+                    setcolor=(255,45,45,255),unsetcolor=(0,0,0,0))
+                red.set_alpha(200)
+                tinted = image.copy()
+                tinted.blit(red,(0,0))
+                self.hit_sprites[cache_key] = tinted
+            image = self.hit_sprites[cache_key]
+        self.screen.blit(image,rect)
+
+    def draw_damage_effects(self, now):
+        self.wall_breaks = [effect for effect in self.wall_breaks if now-effect[2] < 270]
+        clip = self.screen.get_clip()
+        self.screen.set_clip(self.board)
+        for x,y,started in self.wall_breaks:
+            frame = min(5,max(0,(now-started)//45))
+            size = self.cell*2
+            self.screen.blit(self.sprite(f"wall_break_{frame}",size),
+                (self.board.x+x*self.cell-self.cell//2,
+                 self.board.y+y*self.cell-self.cell//2))
+        # Keep a lethal hit visible briefly before the entity disappears.
+        for tank in self.state.tanks:
+            if tank.hp <= 0 and ("tank",tank.id) in self.hit_effects:
+                name = f'tank_{"ab"[tank.team]}'
+                rect = pygame.Rect(self.board.x+tank.x*self.cell,
+                                   self.board.y+tank.y*self.cell,self.cell,self.cell)
+                self.draw_hit_sprite(name,rect,tank.direction,("tank",tank.id),now)
+        for base in self.state.bases:
+            if base.hp <= 0 and ("base",base.team) in self.hit_effects:
+                rect = pygame.Rect(self.board.x+base.x*self.cell,
+                                   self.board.y+base.y*self.cell,self.cell,self.cell)
+                self.draw_hit_sprite(f'base_{"ab"[base.team]}',rect,Direction.UP,
+                                     ("base",base.team),now)
+        self.screen.set_clip(clip)
 
     def draw_tracers(self, now):
         """One short moving arrow per shot; fade completely within 180 ms."""
@@ -1042,7 +1115,7 @@ class Playground:
             self.draw_match_hud()
         self.draw_panel()
         result = self.runner.rules.outcome(self.state) if self.runner else None
-        if result is not None:
+        if result is not None and pygame.time.get_ticks() >= self.result_ready_at:
             self.draw_result(result)
         elif self.overlay:
             self.draw_charts()
@@ -1111,5 +1184,7 @@ if __name__ == "__main__":
         run()
     finally:
         pygame.quit()
+
+
 
 

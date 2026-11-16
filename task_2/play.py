@@ -132,12 +132,8 @@ class Playground:
     def geometry(self):
         state = self.state
         width = 690 if self.panel_open else self.screen.get_width() - 40
-        top = 120 if self.runner else 75
-        height = (
-            (550 if self.panel_open else 650)
-            if self.runner
-            else (610 if self.panel_open else self.screen.get_height() - 130)
-        )
+        top = 120
+        height = 550 if self.panel_open else 650
         limit = 52 if self.panel_open else max(width, height)
         self.cell = max(1, min(limit, width // state.width, height // state.height))
         self.board = pygame.Rect(
@@ -165,7 +161,7 @@ class Playground:
         surface = (self.small if small else self.font).render(str(text), True, color)
         self.screen.blit(surface, (x, y))
 
-    def button(self, label, rect, callback, active=False, style="neutral"):
+    def button(self, label, rect, callback, active=False, style="neutral", enabled=True):
         rect = pygame.Rect(rect)
         palettes = {
             "neutral": ((56, 69, 87), (39, 49, 65), (85, 102, 125)),
@@ -178,10 +174,12 @@ class Playground:
         top, bottom, border = palettes[
             "info" if active and style == "neutral" else style
         ]
+        if not enabled:
+            top, bottom, border = (40, 46, 57), (30, 36, 46), (62, 72, 88)
         mouse_pos = self.embedded_mouse_pos
         if mouse_pos is None:
             mouse_pos = pygame.mouse.get_pos()
-        hovered = rect.collidepoint(mouse_pos)
+        hovered = enabled and rect.collidepoint(mouse_pos)
         surface = pygame.Surface(rect.size, pygame.SRCALPHA)
         for y in range(rect.height):
             ratio = y / max(1, rect.height - 1)
@@ -198,14 +196,15 @@ class Playground:
             self.screen, border, rect, 2 if active or hovered else 1, border_radius=6
         )
         font = self.action_font if style != "neutral" else self.small
-        text = font.render(str(label), True, (250, 252, 255))
+        text = font.render(str(label), True, (250, 252, 255) if enabled else MUTED)
         position = (
             text.get_rect(center=rect.center)
             if style != "neutral"
             else text.get_rect(midleft=(rect.x + 9, rect.centery))
         )
         self.screen.blit(text, position)
-        self.buttons.append((rect, callback))
+        if enabled:
+            self.buttons.append((rect, callback))
 
     def field(self, name, label, rect):
         rect = pygame.Rect(rect)
@@ -352,13 +351,36 @@ class Playground:
             ),
         )
 
-    def cycle_mode(self):
-        if self.selected is None:
+    def cycle_mode(self, tank_id=None):
+        tid = self.selected if tank_id is None else tank_id
+        if tid is None:
             raise ValueError("Select a tank first")
-        current = self.mode_by_id.get(self.selected, MODES[-1])
-        self.mode_by_id[self.selected] = (
-            MODES[(MODES.index(current) + 1) % 4] if current in MODES else MODES[0]
-        )
+        current = self.mode_by_id.get(tid, MODES[-1])
+        mode = MODES[(MODES.index(current)+1) % len(MODES)] if current in MODES else MODES[0]
+        if self.runner:
+            old = self.runner.agents[tid]
+            agent = SearchAgent(self.runner.rules, tid, mode, self.number("depth"),
+                                seed=tid, use_nemesis=self.nemesis)
+            if isinstance(old, SearchAgent):
+                agent.memory = old.memory
+            self.runner.agents[tid] = agent
+        self.mode_by_id[tid] = mode
+        self.selected = tid
+        self.message = f"T{tid}: {MODE_LABELS[MODES.index(mode)]}; applies to the next AI decision."
+
+    def switch_search(self, tank_id):
+        self.defer(lambda: self.cycle_mode(tank_id))
+
+    def draw_tank_row(self, tank, x, y, width):
+        mode = self.mode_by_id.get(tank.id, MODES[-1])
+        mode_name = Path(mode[5:]).name if mode.startswith("file:") else MODE_LABELS[MODES.index(mode)]
+        team = "?" if tank.team is None else "AB"[tank.team]
+        switch_width = 180
+        self.button(f"T{tank.id} [{team}] HP {tank.hp} | {mode_name}",
+                    (x,y,width-switch_width-6,29),
+                    lambda tid=tank.id:setattr(self,"selected",tid), self.selected == tank.id)
+        self.button("Switch search algorithm", (x+width-switch_width,y,switch_width,29),
+                    lambda tid=tank.id:self.switch_search(tid))
 
     def load_bot(self):
         if self.selected is None:
@@ -903,58 +925,26 @@ class Playground:
         self.button("Clear all", (x + 300, 329, 135, 36), self.clear, style="danger")
         self.text("03  TANKS & AI", x, 393, (139, 184, 230), True)
         for index, tank in enumerate(self.state.tanks):
-            mode = self.mode_by_id.get(tank.id, MODES[-1])
-            mode_name = (
-                Path(mode[5:]).name
-                if mode.startswith("file:")
-                else MODE_LABELS[MODES.index(mode)]
-            )
-            team = "?" if tank.team is None else "AB"[tank.team]
-            self.button(
-                f"T{tank.id} [{team}] HP {tank.hp} | {mode_name}",
-                (x, 425 + index * 34, 435, 29),
-                lambda tid=tank.id: setattr(self, "selected", tid),
-                self.selected == tank.id,
-            )
-        self.button("Cycle selected AI", (x, 575, 205, 34), self.cycle_mode)
-        self.button("Load .py for tank", (x + 215, 575, 220, 34), self.load_bot)
+            self.draw_tank_row(tank, x, 425+index*34, 435)
         self.text("Place 2 bases; assign every tank to A or B.", x, 641, MUTED, True)
         self.text("Export saves terrain only (walls).", x, 670, MUTED, True)
         self.text("START begins the match immediately.", x, 715, FG, True)
 
     def draw_match_hud(self):
         runner = self.runner
-        self.screen.blit(
-            self.turn_font.render(
-                f"TURN #{self.state.turn} / {self.state.max_turns}", True, FG
-            ),
-            (265, 18),
-        )
-        self.button(
-            "Take control",
-            (20, 65, 140, 36),
-            lambda: self.defer(self.take_control),
-            style="info",
-        )
-        self.button(
-            "Return to AI",
-            (170, 65, 140, 36),
-            lambda: self.defer(lambda: self.control(None)),
-            style="violet",
-        )
-        self.button(
-            "Resume" if runner.paused else "Pause",
-            (320, 65, 105, 36),
-            lambda: self.defer(self.pause_resume),
-            style="primary" if runner.paused else "warning",
-        )
-        self.text(
-            "Control: AI" if runner.human is None else f"Control: T{runner.human}",
-            445,
-            72,
-            MUTED,
-            True,
-        )
+        turn = runner.state.turn if runner else 0
+        limit = runner.state.max_turns if runner else (self.fields["turns"] or "-")
+        self.screen.blit(self.turn_font.render(f"TURN #{turn} / {limit}", True, FG), (265,18))
+        self.button("Take control", (20,65,140,36),
+                    lambda:self.defer(self.take_control), style="info", enabled=runner is not None)
+        self.button("Return to AI", (170,65,140,36),
+                    lambda:self.defer(lambda:self.control(None)), style="violet", enabled=runner is not None)
+        self.button("Resume" if runner and runner.paused else "Pause", (320,65,105,36),
+                    lambda:self.defer(self.pause_resume),
+                    style="primary" if runner and runner.paused else "warning", enabled=runner is not None)
+        status = ("Start a match to play" if runner is None else
+                  "Control: AI" if runner.human is None else f"Control: T{runner.human}")
+        self.text(status,445,72,MUTED,True)
 
     def draw_panel(self):
         if not self.runner:
@@ -1022,19 +1012,7 @@ class Playground:
 
         section("03  TANKS & SEARCH", 340, 350)
         for index, tank in enumerate(self.state.tanks):
-            mode = self.mode_by_id.get(tank.id, MODES[-1])
-            mode_name = (
-                Path(mode[5:]).name
-                if mode.startswith("file:")
-                else MODE_LABELS[MODES.index(mode)]
-            )
-            team = "?" if tank.team is None else "AB"[tank.team]
-            self.button(
-                f"T{tank.id} [{team}]  HP {tank.hp} | {mode_name}",
-                (x + 9, 380 + index * 34, 415, 29),
-                lambda tid=tank.id: setattr(self, "selected", tid),
-                self.selected == tank.id,
-            )
+            self.draw_tank_row(tank, x+9, 380+index*34, 415)
         self.text(
             "Click a tank above or on the map, then click Take control.",
             x + 9,
@@ -1233,8 +1211,7 @@ class Playground:
                 MUTED,
                 True,
             )
-        if self.runner:
-            self.draw_match_hud()
+        self.draw_match_hud()
         self.draw_panel()
         result = self.runner.rules.outcome(self.state) if self.runner else None
         if result is not None and pygame.time.get_ticks() >= self.result_ready_at:
@@ -1305,5 +1282,9 @@ if __name__ == "__main__":
         run()
     finally:
         pygame.quit()
+
+
+
+
 
 

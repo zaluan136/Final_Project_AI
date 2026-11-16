@@ -1,19 +1,24 @@
 # Introduction to Artificial Intelligence - Final Project
 
-Đồ án gồm ba bài toán AI, có thể chạy riêng hoặc mở từ launcher chung:
+[GitHub repository](https://github.com/zaluan136/Final_Project_AI)
 
-Xem [hướng dẫn demo từng bước](DEMO.md) để chuẩn bị và trình bày cả ba task.
-Xem [kiến thức và luồng hoạt động](docs/KIEN_THUC_VA_LUONG.md) để đọc code và chuẩn bị nội dung báo cáo.
+The project contains three applications:
 
-- [Task 1 - N-Queens](task_1/README.md): giải và hiển thị bài toán N quân hậu bằng SAT hoặc Min-Conflicts.
-- [Task 2 - Tank Battle](task_2/README.md): mô phỏng trận đấu xe tăng với các thuật toán tìm kiếm; giao diện dùng Pygame.
-- [Task 3 - Kakuro CSP](task_3/README.md): minh họa quá trình giải Kakuro bằng Backtracking, Forward Checking, MRV, Degree và LCV.
+- [N-Queens](task_1/README.md): N-Queens with SAT and Min-Conflicts.
+- [Tank Battle](task_2/README.md): Tank Battle with adversarial search and Pygame.
+- [Kakuro](task_3/README.md): Kakuro with constraint propagation and backtracking.
 
-## Cài đặt
+Each task directory contains its own README. The project root also contains [report.pdf](../report.pdf) and [demo.txt](../demo.txt).
 
-Khuyến nghị dùng Python 3.12. Trên Windows, Pygame 2.6.1 có thể gặp lỗi biên dịch khi cài với Python 3.14. Các lệnh dưới đây chạy từ thư mục gốc dự án.
+## Setup
 
-Tạo và kích hoạt môi trường ảo trên Windows PowerShell:
+Use Python 3.12. Open a terminal in the project root and enter the source directory:
+
+```bash
+cd source
+```
+
+Windows PowerShell:
 
 ```powershell
 py -3.12 -m venv .venv
@@ -21,7 +26,7 @@ py -3.12 -m venv .venv
 python -m pip install -r requirements.txt
 ```
 
-Trên macOS hoặc Linux:
+macOS or Linux:
 
 ```bash
 python3 -m venv .venv
@@ -29,17 +34,15 @@ source .venv/bin/activate
 python -m pip install -r requirements.txt
 ```
 
-File `requirements.txt` cài dependency của cả ba task. Task 1 và 3 dùng cùng phiên bản PySide6; Task 2 dùng Pygame.
+## Run
 
-## Chạy ứng dụng
-
-Mở launcher và chọn task ở thanh bên:
+Run these commands from `source/`:
 
 ```bash
 python launcher.py
 ```
 
-Task 1 và 3 dùng theme chung `ui/themes.qss`. Task 2 được nhúng trong launcher và tự co giãn theo tỷ lệ khi đổi kích thước cửa sổ; chữ và đường viền được vẽ theo độ phân giải hiển thị. Giao diện Pygame không chịu ảnh hưởng của QSS. Có thể chạy từng task trực tiếp:
+To run a task separately:
 
 ```bash
 python -m task_1
@@ -47,12 +50,10 @@ python -m task_2
 python -m task_3
 ```
 
-## Kiểm thử
-
-Chạy các kiểm thử hiện có từ thư mục gốc:
+## Test
 
 ```bash
 python -m unittest discover -v
 ```
 
-Xem README của từng task để biết cách sử dụng, cấu trúc và các lệnh kiểm thử riêng.
+

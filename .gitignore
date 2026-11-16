@@ -17,3 +17,5 @@ htmlcov/
 *.synctex.gz
 *.toc
 *.out
+.outside/
+*.tex

@@ -3,7 +3,6 @@
 Đồ án gồm ba bài toán AI, có thể chạy riêng hoặc mở từ launcher chung:
 
 Xem [hướng dẫn demo từng bước](DEMO.md) để chuẩn bị và trình bày cả ba task.
-Xem [đối chiếu code với đề](AUDIT.md) để biết kết quả kiểm tra và giới hạn.
 Xem [kiến thức và luồng hoạt động](docs/KIEN_THUC_VA_LUONG.md) để đọc code và chuẩn bị nội dung báo cáo.
 
 - [Task 1 - N-Queens](task_1/README.md): giải và hiển thị bài toán N quân hậu bằng SAT hoặc Min-Conflicts.
@@ -17,7 +16,6 @@ Khuyến nghị dùng Python 3.12. Trên Windows, Pygame 2.6.1 có thể gặp l
 Tạo và kích hoạt môi trường ảo trên Windows PowerShell:
 
 ```powershell
-winget install -e --id Python.Python.3.12
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
